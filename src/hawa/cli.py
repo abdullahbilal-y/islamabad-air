@@ -52,6 +52,56 @@ def ingest(
     raise typer.Exit(code=1 if failed else 0)
 
 
+@app.command("ingest-file")
+def ingest_file(
+    path: str = typer.Argument(..., help="A saved copy of the source's response body."),
+    source: str = typer.Option("pmd_pollen", help="Which source this body came from."),
+    url: str = typer.Option("", help="Where it was fetched from, for the record."),
+    fetched_at: str | None = typer.Option(
+        None, help="ISO timestamp of when it was fetched. Defaults to now (UTC)."
+    ),
+) -> None:
+    """Ingest a response body that was fetched elsewhere.
+
+    PMD refuses requests from outside Pakistan, so the fetch sometimes has to
+    happen on a different machine (or a Cloudflare Worker in Islamabad) from the
+    one that parses and publishes. This is the seam between those two halves:
+    hand it the bytes and everything downstream behaves exactly as if we had
+    fetched them ourselves -- snapshot committed first, parse isolated, writes
+    idempotent.
+
+    Passing the real fetch time matters. Defaulting to "now" would date a
+    replayed or delayed body to the moment CI happened to run, quietly
+    misfiling which day the reading belongs to.
+    """
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    from hawa.ingest import ingest_fetched
+    from hawa.sources.base import Fetched
+
+    init_db()
+    body = Path(path).read_text(encoding="utf-8", errors="replace")
+    if not body.strip():
+        typer.echo(f"{path} is empty; refusing to ingest an empty body", err=True)
+        raise typer.Exit(code=1)
+
+    when = (
+        datetime.fromisoformat(fetched_at.replace("Z", "+00:00"))
+        if fetched_at
+        else datetime.now(timezone.utc)
+    )
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+
+    report = ingest_fetched(
+        source,
+        Fetched(url=url or f"file://{path}", status_code=200, body=body, fetched_at=when),
+    )
+    typer.echo(report.summary())
+    raise typer.Exit(code=0 if report.ok else 1)
+
+
 @app.command()
 def reparse(
     source: str | None = typer.Option(None, help="Limit to one source."),

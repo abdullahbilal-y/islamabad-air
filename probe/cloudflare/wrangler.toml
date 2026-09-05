@@ -2,19 +2,17 @@ name = "pmd-egress-probe"
 main = "src/worker.js"
 compatibility_date = "2024-09-01"
 
-# Smart Placement picks a location based on the ORIGIN a Worker talks to rather
-# than the caller. PMD's origin is in Pakistan and the block is geographic, so
-# this is the only Cloudflare mechanism that could put a cron somewhere that is
-# not refused. Under test -- see probe/README.md for the result.
+# Smart Placement was tested here and did NOT help: three consecutive cron runs
+# all fired from FRA and were refused. The likely reason is that PMD is itself
+# Cloudflare-proxied, so from Cloudflare's routing view the origin is reachable
+# at every edge and there is no latency case for relocating the Worker.
+# Left recorded rather than deleted, so nobody re-runs this experiment.
 [placement]
 mode = "smart"
 
-# Results are stashed here because `wrangler tail` buffers when it is not on a
-# terminal, and because polling a URL beats watching a stream for a cron.
 [[kv_namespaces]]
 binding = "PROBE"
 id = "724c7634e4d94c1c865b2e0c8a7cf109"
 
-# Two minutes while measuring. Remove once the question is settled.
-[triggers]
-crons = ["*/2 * * * *"]
+# No [triggers]. The cron question is answered, and leaving a 2-minute schedule
+# in place would send PMD ~700 pointless requests a day for nothing.

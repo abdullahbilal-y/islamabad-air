@@ -180,3 +180,70 @@ def test_repeated_polling_of_an_unchanged_page_keeps_one_snapshot(db, attempts):
     for _ in range(attempts):
         ingest_source(FakeSource(GOOD_BODY), client=object())
     assert len(_rows(RawSnapshot)) == 1
+
+
+def test_ingest_fetched_accepts_a_body_from_elsewhere(db):
+    """The seam that lets the fetch and the parse happen on different machines.
+
+    PMD refuses requests from outside Pakistan, so the bytes may be retrieved by
+    a Cloudflare Worker in Islamabad and processed later in CI. Everything after
+    the fetch must behave identically to a local fetch.
+    """
+    from datetime import datetime, timezone
+
+    from hawa.ingest import ingest_fetched
+
+    fetched = Fetched(
+        url="https://relay.example/snapshot",
+        status_code=200,
+        body=GOOD_BODY,
+        fetched_at=datetime(2026, 3, 19, 6, 0, tzinfo=timezone.utc),
+    )
+    report = ingest_fetched("pmd_pollen", fetched)
+
+    assert report.ok and report.stage == "stored"
+    assert report.rows_written == 2
+    assert len(_rows(RawSnapshot)) == 1, "the relayed body is snapshotted like any other"
+    assert _rows(RawSnapshot)[0].parse_ok is True
+
+
+def test_ingest_fetched_is_idempotent_with_the_live_path(db):
+    """A relayed body and a directly fetched one are the same observation."""
+    from datetime import datetime, timezone
+
+    from hawa.ingest import ingest_fetched
+
+    ingest_source(FakeSource(GOOD_BODY), client=object())
+    second = ingest_fetched(
+        "pmd_pollen",
+        Fetched(
+            url="https://relay.example/snapshot",
+            status_code=200,
+            body=GOOD_BODY,
+            fetched_at=datetime(2026, 4, 1, 6, 0, tzinfo=timezone.utc),
+        ),
+    )
+
+    assert second.rows_written == 0
+    assert second.rows_duplicate == 2
+    assert len(_rows(PollenReading)) == 2
+
+
+def test_ingest_fetched_keeps_an_unparseable_relayed_body(db):
+    from datetime import datetime, timezone
+
+    from hawa.ingest import ingest_fetched
+
+    report = ingest_fetched(
+        "pmd_pollen",
+        Fetched(
+            url="https://relay.example/snapshot",
+            status_code=200,
+            body="<html>relay returned a block page</html>",
+            fetched_at=datetime(2026, 4, 1, 6, 0, tzinfo=timezone.utc),
+        ),
+    )
+
+    assert report.ok is False and report.stage == "parsed"
+    assert len(_rows(RawSnapshot)) == 1, "kept for replay, exactly like a local fetch"
+    assert _rows(RawSnapshot)[0].parse_ok is False

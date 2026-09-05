@@ -104,6 +104,20 @@ curl https://abdullahbilal-y.github.io/islamabad-air/data/months/2026-09.json
 curl https://abdullahbilal-y.github.io/islamabad-air/data/pollen.csv</code></pre>
   </section>
 
+  <section>
+    <h2>How this stays up to date</h2>
+    <p class="sub">
+      PMD serves requests from Pakistan and refuses them from everywhere else, so
+      no cloud server can collect this data — we measured that across five
+      networks. Instead, opening this page from Pakistan asks a Cloudflare Worker
+      in Islamabad to refresh its cached copy of PMD, and CI picks that copy up a
+      few times a day. So the archive keeps growing as long as someone here looks
+      at it occasionally. If the reading above is old, that is why, and the badge
+      next to the date says so rather than letting a stale number pass as
+      current.
+    </p>
+  </section>
+
   <footer id="attribution"></footer>
 </div>
 
@@ -202,6 +216,20 @@ function daysOld(iso) {
   const then = new Date(iso + "T00:00:00Z");
   return Math.floor((Date.now() - then.getTime()) / 86400000);
 }
+
+// Ask the relay to refresh its cached copy of PMD.
+//
+// PMD serves Pakistan and refuses everywhere else, so the fetch has to happen
+// from a Pakistani connection. A Cloudflare Worker runs in a POP near whoever
+// calls it -- so a visitor in Islamabad opening this page causes the Worker to
+// run in ISB, where it can reach PMD. CI then collects that cached copy, which
+// it could never fetch itself.
+//
+// Fire-and-forget on purpose: the relay rate-limits itself to once every few
+// hours, callers outside Pakistan are declined harmlessly, and nothing on this
+// page depends on the outcome. The data below renders either way.
+fetch("https://hawa-pmd-relay.abdullahbilal-y.workers.dev/refresh", { mode: "cors" })
+  .catch(() => {});
 
 fetch("data/latest.json", { cache: "no-cache" })
   .then(r => r.ok ? r.json() : Promise.reject(new Error("no data")))

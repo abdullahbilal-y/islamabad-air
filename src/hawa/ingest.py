@@ -239,57 +239,73 @@ def ingest_source(source: Source | str, *, client=None) -> IngestReport:
             log.exception("%s fetch raised unexpectedly", src.id)
             return IngestReport(source=src.id, ok=False, stage="fetched", error=repr(exc))
 
-        with Session(get_engine()) as session:
-            # --- 2. persist raw, and commit, before parsing ------------------
-            snapshot = store_snapshot(session, src.id, fetched)
-            snapshot_id = snapshot.id
-
-            # --- 3. parse (isolated: a failure must not lose the snapshot) ---
-            try:
-                result = src.parse(fetched)
-            except Exception as exc:
-                snapshot.parse_ok = False
-                snapshot.parse_error = f"{type(exc).__name__}: {exc}"
-                session.add(snapshot)
-                # A 200 OK we cannot parse is the signature of an upstream
-                # redesign, so it counts against health just like a timeout.
-                record_outcome(
-                    session, src.id, ok=False, failure_stage="parse", detail=str(exc)
-                )
-                session.commit()
-                log.error("%s parse failed (snapshot %s kept): %s", src.id, snapshot_id, exc)
-                return IngestReport(
-                    source=src.id,
-                    ok=False,
-                    stage="parsed",
-                    snapshot_id=snapshot_id,
-                    error=str(exc),
-                )
-
-            # --- 4. idempotent write ----------------------------------------
-            written, duplicates = store_parsed(session, src.id, result, snapshot_id)
-
-            snapshot.parse_ok = True
-            snapshot.parser_strategy = result.strategy
-            snapshot.parse_error = None
-            snapshot.rows_extracted = result.row_count
-            session.add(snapshot)
-            record_outcome(session, src.id, ok=True, rows=result.row_count)
-            session.commit()
-
-        return IngestReport(
-            source=src.id,
-            ok=True,
-            stage="stored",
-            snapshot_id=snapshot_id,
-            strategy=result.strategy,
-            rows_parsed=result.row_count,
-            rows_written=written,
-            rows_duplicate=duplicates,
-        )
+        return ingest_fetched(src, fetched)
     finally:
         if owns_client:
             client.close()
+
+
+def ingest_fetched(source: Source | str, fetched: Fetched) -> IngestReport:
+    """Store and parse an already-fetched body.
+
+    Split out from :func:`ingest_source` because the fetch and the processing
+    have different constraints: PMD refuses requests from outside Pakistan, so
+    the fetch may have to happen somewhere entirely different from where the
+    parsing and publishing run. Everything after the fetch is pure local work
+    and can happen anywhere -- including in CI, from a body someone else
+    retrieved.
+
+    The ordering guarantees are identical either way: raw body committed first,
+    parse isolated, writes idempotent.
+    """
+    src = get_source(source) if isinstance(source, str) else source
+
+    with Session(get_engine()) as session:
+        # --- persist raw, and commit, before parsing -----------------------
+        snapshot = store_snapshot(session, src.id, fetched)
+        snapshot_id = snapshot.id
+
+        # --- parse (isolated: a failure must not lose the snapshot) --------
+        try:
+            result = src.parse(fetched)
+        except Exception as exc:
+            snapshot.parse_ok = False
+            snapshot.parse_error = f"{type(exc).__name__}: {exc}"
+            session.add(snapshot)
+            # A 200 OK we cannot parse is the signature of an upstream
+            # redesign, so it counts against health just like a timeout.
+            record_outcome(session, src.id, ok=False, failure_stage="parse", detail=str(exc))
+            session.commit()
+            log.error("%s parse failed (snapshot %s kept): %s", src.id, snapshot_id, exc)
+            return IngestReport(
+                source=src.id,
+                ok=False,
+                stage="parsed",
+                snapshot_id=snapshot_id,
+                error=str(exc),
+            )
+
+        # --- idempotent write ----------------------------------------------
+        written, duplicates = store_parsed(session, src.id, result, snapshot_id)
+
+        snapshot.parse_ok = True
+        snapshot.parser_strategy = result.strategy
+        snapshot.parse_error = None
+        snapshot.rows_extracted = result.row_count
+        session.add(snapshot)
+        record_outcome(session, src.id, ok=True, rows=result.row_count)
+        session.commit()
+
+    return IngestReport(
+        source=src.id,
+        ok=True,
+        stage="stored",
+        snapshot_id=snapshot_id,
+        strategy=result.strategy,
+        rows_parsed=result.row_count,
+        rows_written=written,
+        rows_duplicate=duplicates,
+    )
 
 
 def ingest_enabled_sources() -> list[IngestReport]:

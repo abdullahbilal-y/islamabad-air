@@ -1,0 +1,98 @@
+# Collect the pollen reading and publish it. Runs entirely on free CI.
+#
+# GitHub Actions cannot reach PMD -- weather.gov.pk serves Pakistan and refuses
+# everywhere else (probe/README.md). It does not need to. The Cloudflare relay
+# fetches PMD from inside Pakistan and caches the page; this job collects that
+# cached copy, which is an ordinary request to workers.dev and works from
+# anywhere. Parsing, publishing and committing are all local work.
+#
+# The relay's cache is refreshed by anyone in Pakistan opening the dashboard, so
+# a stale snapshot is a normal state, not a failure. This job handles that
+# explicitly instead of committing the same day repeatedly.
+name: Collect pollen data
+
+on:
+  schedule:
+    # Three times a day, Pakistan time (UTC+5): morning, afternoon, evening.
+    # PMD publishes once a day; the extra runs just catch a late update or a
+    # relay cache that was refreshed after the first attempt.
+    - cron: "30 4 * * *"
+    - cron: "30 10 * * *"
+    - cron: "30 16 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    env:
+      RELAY: https://hawa-pmd-relay.abdullahbilal-y.workers.dev
+      HAWA_DATABASE_URL: sqlite:///./hawa.db
+      HAWA_ENABLE_SCHEDULER: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -e .
+
+      - name: Fetch the cached snapshot from the relay
+        id: fetch
+        run: |
+          set -euo pipefail
+          code=$(curl -sS --max-time 60 -D headers.txt -o snapshot.html \
+                   -w "%{http_code}" "$RELAY/snapshot" || echo 000)
+          echo "relay responded $code"
+
+          if [ "$code" != "200" ]; then
+            # 503 means the relay has never been refreshed. That is a real
+            # state to report, not a build failure to page someone about.
+            echo "no snapshot available from the relay yet"
+            echo "have_snapshot=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          fetched_at=$(grep -i '^x-fetched-at:' headers.txt | tr -d '\r' | awk '{print $2}')
+          echo "snapshot fetched at ${fetched_at:-unknown}, $(wc -c < snapshot.html) bytes"
+          echo "have_snapshot=true" >> "$GITHUB_OUTPUT"
+          echo "fetched_at=$fetched_at" >> "$GITHUB_OUTPUT"
+
+      - name: Ingest and publish
+        if: steps.fetch.outputs.have_snapshot == 'true'
+        run: |
+          set -euo pipefail
+          # Pass the relay's fetch time through. Dating the reading by CI's own
+          # clock would misfile a snapshot that was cached hours earlier.
+          hawa ingest-file snapshot.html \
+            --source pmd_pollen \
+            --url "$RELAY/snapshot" \
+            ${{ steps.fetch.outputs.fetched_at && format('--fetched-at {0}', steps.fetch.outputs.fetched_at) || '' }}
+          hawa publish
+
+      - name: Commit any new data
+        if: steps.fetch.outputs.have_snapshot == 'true'
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- docs)" ]; then
+            echo "no change -- the relay's snapshot is for a day we already hold"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -m "data: pollen readings as of $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: Report data health
+        if: always()
+        run: hawa health || echo "health check reports a problem (see above)"

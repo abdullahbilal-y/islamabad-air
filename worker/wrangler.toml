@@ -1,0 +1,13 @@
+name = "hawa-pmd-relay"
+main = "src/worker.js"
+compatibility_date = "2024-09-01"
+
+# Deliberately no [triggers]. A cron Worker has no caller, so Cloudflare runs it
+# in an arbitrary colo -- measured as FRA, which PMD refuses. The refresh has to
+# be driven by a request from Pakistan instead. See probe/README.md.
+
+# Holds the cached PMD page plus fetch metadata. Note: this id is account-scoped.
+# If you fork this, run `wrangler kv namespace create RELAY` and use your own.
+[[kv_namespaces]]
+binding = "CACHE"
+id = "1af96d7a00384f54845e090565069313"
