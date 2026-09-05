@@ -70,6 +70,39 @@
   .freshness.is-stale strong { color:var(--high); }
   .refresh-state { font-style:italic; }
 
+  /* --- History chart -------------------------------------------------------
+     Categorical palette, validated with the dataviz validator against both
+     surfaces (all checks pass; light-mode aqua/yellow sit under 3:1 contrast,
+     which is why every line is directly labelled AND a table view ships). */
+  .viz { --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+         --grid:#e5e1d8; --axis:#6b675e; }
+  @media (prefers-color-scheme: dark) {
+    .viz { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+           --grid:#2e3138; --axis:#9a978f; }
+  }
+  .chart-wrap { position:relative; }
+  .chart { width:100%; height:auto; display:block; overflow:visible; }
+  .chart .grid { stroke:var(--grid); stroke-width:1; }
+  .chart .axis-text { fill:var(--axis); font-size:11px; }
+  .chart .series-line { fill:none; stroke-width:2; stroke-linejoin:round;
+                        stroke-linecap:round; }
+  /* 2px surface ring keeps a dot legible where lines cross. */
+  .chart .dot { stroke:var(--panel); stroke-width:2; }
+  .chart .end-label { font-size:11.5px; font-weight:600; fill:var(--ink); }
+  .legend { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 10px;
+            font-size:12.5px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i { width:14px; height:3px; border-radius:2px; display:inline-block; }
+  .tip { position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
+         background:var(--panel); border:1px solid var(--line); border-radius:8px;
+         padding:8px 10px; font-size:12.5px; color:var(--ink);
+         box-shadow:0 4px 14px rgba(0,0,0,.12); white-space:nowrap; z-index:5; }
+  .tip b { font-weight:600; }
+  .tip .row { display:flex; align-items:center; gap:6px; margin-top:3px; }
+  .tip .row i { width:10px; height:3px; border-radius:2px; }
+  details.tableview { margin-top:14px; }
+  details.tableview summary { cursor:pointer; font-size:13px; color:var(--accent); }
+
   /* A sector whose trap sent nothing. Visibly present but visibly empty --
      omitting it entirely reads as a bug in this site. */
   .card.silent { border-style:dashed; opacity:.72; }
@@ -116,6 +149,11 @@
       Counts are grains per cubic metre over 24 hours. A blank cell means that
       sector's trap reported nothing for that type — it is not a zero.
     </p>
+  </section>
+
+  <section id="history-section" class="viz">
+    <h2>Daily total pollen, by sector</h2>
+    <div id="history-body"></div>
   </section>
 
   <section>
@@ -306,5 +344,6 @@ fetch("data/latest.json", { cache: "no-cache" })
     );
   });
 </script>
+<script src="history.js"></script>
 </body>
 </html>
