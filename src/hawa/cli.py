@@ -166,6 +166,66 @@ def settings_set(key: str, value: str) -> None:
 
 
 @app.command()
+def publish(
+    out: str = typer.Option("docs", help="Directory to write the static site data into."),
+) -> None:
+    """Write the dataset to static JSON/CSV files.
+
+    These files are the public API -- see src/hawa/publish.py for why a static
+    file beats a server at this data volume.
+    """
+    from pathlib import Path
+
+    from hawa.publish import publish_all
+
+    init_db()
+    with session_scope() as session:
+        report = publish_all(session, Path(out))
+    typer.echo(report.summary())
+
+
+@app.command()
+def poll(
+    publish_to: str = typer.Option("docs", "--publish-to", help="Static output directory."),
+    send: bool = typer.Option(True, help="Deliver any alerts that fire."),
+) -> None:
+    """One full cycle: ingest, evaluate alerts, republish. Run this on a schedule.
+
+    Exits 0 even when a source fails. This is what a scheduler calls, and a
+    non-zero exit on a transient PMD outage would light up as a failed task
+    every time their server hiccups -- which is often. Real problems surface
+    through `hawa health`, which is what you should alert on.
+    """
+    from pathlib import Path
+
+    from hawa.alerts.engine import dispatch_pending, evaluate
+    from hawa.ingest import ingest_enabled_sources
+    from hawa.publish import publish_all
+
+    init_db()
+
+    for report in ingest_enabled_sources():
+        typer.echo(report.summary())
+
+    try:
+        with session_scope() as session:
+            created = evaluate(session)
+        for event in created:
+            typer.echo(f"alert: {event.trigger}")
+        if send and created:
+            with session_scope() as session:
+                delivered, failed = dispatch_pending(session)
+            typer.echo(f"alerts delivered={delivered} failed={failed}")
+    except Exception as exc:
+        # Alerting is best-effort; the data is already stored. Never let a
+        # broken Telegram token stop the dataset being published.
+        typer.echo(f"alert stage failed (data is unaffected): {exc}", err=True)
+
+    with session_scope() as session:
+        typer.echo(publish_all(session, Path(publish_to)).summary())
+
+
+@app.command()
 def serve(
     host: str = typer.Option("127.0.0.1", help="Bind address. Use 0.0.0.0 in a container."),
     port: int = typer.Option(8000),

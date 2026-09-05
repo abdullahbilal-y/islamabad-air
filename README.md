@@ -1,225 +1,188 @@
-# Hawa — Islamabad Pollen & Air Quality API
+# Hawa — Islamabad Pollen Data
 
-**An open API for data that already exists but nobody can use.**
+**An open, queryable archive of Islamabad's daily pollen counts — and something that actually tells you when they spike.**
 
-Every spring, Islamabad gets one of the worst paper mulberry pollen seasons
-anywhere in the world. Every winter, it gets smog. The Pakistan Meteorological
-Department actually measures the pollen — daily, sector by sector, for H-8, E-8,
-G-6 and F-10 — and publishes the numbers on a web page.
-
-That page renders its table in JavaScript. So the numbers are, in practice,
-unavailable: you cannot query them, you cannot get yesterday's, you cannot chart
-a season, and you certainly cannot build an app that texts an asthmatic person
-when their sector spikes.
-
-Hawa scrapes that page, keeps the history, and serves it as a plain REST API
-with an OpenAPI schema, a dashboard, and a threshold alert engine.
-
-> Independent open-source project. **Not** affiliated with or endorsed by PMD.
-> Not medical advice.
+📊 **[Live data and dashboard](https://abdullahbilal-y.github.io/islamabad-air/)** ·
+🔌 [`latest.json`](https://abdullahbilal-y.github.io/islamabad-air/data/latest.json) ·
+📈 [Full CSV](https://abdullahbilal-y.github.io/islamabad-air/data/pollen.csv)
 
 ---
 
-## Quick start
+## What this is, and what it isn't
+
+The Pakistan Meteorological Department measures pollen every day in sectors
+H-8, E-8, G-6 and F-10, and publishes it at
+[weather.gov.pk/rnd/pollen-data](https://weather.gov.pk/rnd/pollen-data).
+**Their page is good. If you just want today's number, go there** — this project
+does not try to replace it.
+
+Three things it doesn't do, which is where this comes in:
+
+- **It won't tell you anything.** You have to remember to check. For someone
+  whose spring is ruined by paper mulberry, "a message arrives when H-8 crosses
+  15,000" is the whole point, and no dashboard substitutes for it.
+- **There's no history.** Their month selector returns no rows — even PMD won't
+  hand you last April. Anything that starts accumulating today owns a dataset
+  that otherwise won't exist.
+- **It isn't machine-readable.** The table is rendered in JavaScript, so nobody
+  can build on it.
+
+So: **an alert engine, a growing archive, and a real API.** The dashboard here
+exists to make the data legible, not to compete with PMD's.
+
+## The API is just files
+
+No key, no rate limit, no server that can go down. About 32 rows a day means a
+year of this dataset is roughly one megabyte — at that size a JSON file on a CDN
+beats a hosted API on every axis that matters, including staying alive.
+
+```bash
+curl https://abdullahbilal-y.github.io/islamabad-air/data/latest.json
+curl https://abdullahbilal-y.github.io/islamabad-air/data/months/2026-09.json
+curl https://abdullahbilal-y.github.io/islamabad-air/data/pollen.csv
+```
+
+| File | Contents |
+|---|---|
+| `data/latest.json` | Newest day: every reading, plus per-sector totals and severity bands |
+| `data/months/YYYY-MM.json` | One month of readings with daily summaries |
+| `data/pollen.csv` | The entire history, one row per reading |
+| `data/index.json` | Manifest — date range, months available, sectors, pollen types |
+
+```json
+{
+  "observed_date": "2026-09-04",
+  "sectors": [
+    { "sector": "H-8", "total": 76, "band": "absent",
+      "top_type": "Cannabis", "top_value": 36, "types_reported": 8 }
+  ]
+}
+```
+
+Every reading carries both `value` (parsed) and `value_raw` (exactly what PMD
+printed — `"00"`, not `0`). If a cell couldn't be read, `value` is `null`,
+`value_raw` keeps the text, and `needs_review` is `true`. We never guess a
+number, because a plausible wrong number is one nobody ever checks.
+
+## Running it yourself
 
 ```bash
 git clone https://github.com/abdullahbilal-y/islamabad-air
 cd islamabad-air
-
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 
-hawa ingest      # fetch today's PMD page and store it
-hawa serve       # http://127.0.0.1:8000
+hawa poll        # fetch, evaluate alerts, republish docs/data
 ```
 
-Then open <http://127.0.0.1:8000> for the dashboard, or `/docs` for the
-interactive API reference.
+`hawa poll` is the whole cycle and the thing you put on a schedule:
 
-No database to set up — it uses SQLite by default. Point `HAWA_DATABASE_URL` at
-Postgres when you outgrow that.
-
-## The API
-
-| Endpoint | What it gives you |
-|---|---|
-| `GET /v1/pollen/latest` | The most recent day: every pollen type in every reporting sector, plus per-sector totals and severity bands |
-| `GET /v1/pollen/{date}` | One specific day |
-| `GET /v1/pollen?start=&end=&sector=&pollen_type=` | Range query — this is the one that makes seasons chartable |
-| `GET /v1/pollen/sectors/summary` | Per-sector totals and bands for a day |
-| `GET /v1/air/latest?metric=pm25` | Latest reading per air sensor |
-| `GET /v1/sources` | Every source, whether it's enabled, and why it isn't running if it isn't |
-| `POST /v1/subscriptions` | Subscribe a Telegram chat or a webhook to threshold alerts |
-| `GET /healthz` | Whether ingest is actually *working* (see below) |
-
-Example:
+```powershell
+# Windows — twice daily, catching up if the machine was asleep
+powershell -ExecutionPolicy Bypass -File scripts\install-task.ps1
+```
 
 ```bash
-curl -s localhost:8000/v1/pollen/latest | jq '.sectors'
+# macOS/Linux
+0 10,19 * * * /path/to/islamabad-air/scripts/daily-poll.sh >> /tmp/hawa.log 2>&1
 ```
 
-```json
-[
-  {
-    "sector": "H-8",
-    "observed_date": "2026-09-04",
-    "total": 76,
-    "band": "absent",
-    "top_type": "Cannabis",
-    "top_value": 36,
-    "types_reported": 8
-  }
-]
-```
+The script commits and pushes only when the data actually changed, so quiet days
+leave no noise in the history.
 
-For bulk analysis, skip the API: `hawa export --out pollen.csv` writes the whole
-history in one file.
+### Why the ingest runs on your machine
 
-## What's actually verified
+Because it has to. **PMD returns HTTP 403 to datacenter IPs.** This is measured,
+not assumed — [`egress-probe.yml`](.github/workflows/egress-probe.yml) sends the
+same three requests (our UA, a browser UA, no UA) and gets:
 
-Being straight about this, because a scraper's README is exactly where people
-overclaim:
+| Request | From a home connection | From a GitHub runner (Azure) |
+|---|---|---|
+| our `hawa/0.1` UA | 200 | 403 |
+| browser UA | 200 | 403 |
+| no UA | 200 | 403 |
 
-- **PMD pollen source — verified live** on 2026-09-05 against
-  `https://weather.gov.pk/rnd/pollen-data`. The parser test runs against a
-  byte-for-byte capture of that real page, checked into `tests/fixtures/`.
-  It correctly reads all 8 pollen types PMD tracks and all 4 sector columns.
-- **PurpleAir and OpenAQ sources — written against their documented APIs, not
-  yet run against a live key.** They ship with unit tests over synthetic
-  responses, and they report themselves unavailable when no key is configured
-  rather than pretending to work. If you have a key, running them and reporting
-  back is a genuinely useful first contribution.
-- Note that `rnd.pmd.gov.pk` and `namc.pmd.gov.pk` were both returning HTTP 500
-  during development. `weather.gov.pk` was the host that worked. The URL lives
-  in a settings row precisely because this keeps happening.
+The User-Agent changes nothing; the egress IP changes everything. So GitHub
+Actions, AWS, Fly, Render and Netlify Functions will all very likely fetch
+nothing, while a laptop on a normal connection works fine. Run the probe from
+any host you're considering rather than trusting this table.
 
-### Before you deploy this to a cloud host, read this
+Please don't work around a 403 by spoofing a browser or rotating IPs. This is
+public data being read politely, twice a day, with an identifying User-Agent. If
+PMD doesn't want datacenter traffic, the answer is to run somewhere else.
 
-**PMD returns HTTP 403 to datacenter IPs.** The exact request that works from a
-home connection is refused from a GitHub Actions runner — first request, no rate
-limiting involved, and the User-Agent makes no difference. A default deployment
-on AWS, GCP, Azure, Fly or Render will very likely never fetch anything.
-
-Run one `hawa ingest` from your target host before building anything on top of
-it. If you get a 403, you need a residential or Pakistani egress route, not a
-code change. Please do not work around this by spoofing a browser or rotating
-IPs — this is public data being read politely, and if PMD does not want
-datacenter traffic the answer is to run somewhere else.
-
-## Design: three decisions that shape everything
-
-Scraping a government page you have no agreement with is a specific engineering
-problem, and most of this codebase is a response to it.
-
-**1. The raw bytes are saved before anything parses them.**
-Today's pollen count exists for exactly one day. If our parser is broken when we
-fetch it, PMD will not re-publish it for us — the number is gone forever. So
-`ingest` persists the fetched body and commits, *then* parses in a separate
-try/except. Fix the parser later and `hawa reparse` replays the stored snapshots
-and recovers the days you would otherwise have lost.
-
-**2. A 200 OK with zero rows is treated as a failure.**
-When PMD redesigns the page, the fetch keeps succeeding and the parser silently
-finds nothing. "No pollen today" and "our scraper is broken" look identical from
-the outside, and only one of them is safe to serve during peak season. So the
-parser raises rather than returning empty, health goes red, and `/healthz`
-returns 503.
-
-**3. Health is measured on outcomes, not on connections.**
-`/healthz` tracks how many fetch attempts actually produced rows over a rolling
-window, *and* how old the newest reading is. Both have to be good. A green
-process serving three-week-old pollen counts is the failure this catches, and it
-is invisible to any check that only asks "is the server up?".
-(`/livez` is separate and deliberately dumb — restarting the container does not
-fix a government website changing its HTML.)
-
-A fourth, smaller one: **values are stored exactly as printed.** PMD prints
-`"00"`, not `0`. If a cell is something we cannot read, we keep the text, set
-the number to null, and flag it for review — we never guess a plausible-looking
-number, because a wrong number nobody questions is worse than a visible gap.
+The honest cost of this: the ingest only runs when your machine is on, so gaps
+happen. A missed day can't be recovered — PMD keeps no archive — and the
+dashboard flags the data as stale rather than letting an old number look
+current.
 
 ## Alerts
 
 ```bash
-hawa subscribe telegram 123456789 --sectors H-8,G-6 --threshold 20000
-hawa check-alerts --send
+hawa subscribe telegram 123456789 --sectors H-8,G-6 --threshold 15000
+hawa poll     # evaluates and delivers on every run
 ```
 
-Or over HTTP:
+Deduplicated per subscriber, per sector, per day, so a twice-daily poll can't
+spam anyone. A delivery failure leaves the alert retryable rather than dropping
+it. Telegram and generic webhooks ship; the webhook is how you'd wire up
+WhatsApp through a provider, or web push.
 
-```bash
-curl -X POST localhost:8000/v1/subscriptions \
-  -H 'content-type: application/json' \
-  -d '{"channel":"webhook","target":"https://your.app/hook","sectors":"H-8"}'
-```
+Subscriptions live only in your local database and are **never** published —
+they contain chat ids and webhook URLs, and there's a test asserting they can't
+leak into the repo.
 
-Alerts are deduplicated per subscriber, per sector, per day, so the 30-minute
-poll cannot spam anyone. Delivery failures leave the alert retryable rather than
-dropping it. Channels ship for Telegram and generic webhooks — the webhook is
-how you'd wire up WhatsApp through a provider, or web push.
+## Design notes
 
-## Configuration
+Scraping a page you have no agreement with is a specific problem, and most of
+this codebase is a response to it.
 
-Secrets and bootstrap values come from the environment (see `.env.example`):
+**The raw bytes are stored before anything parses them.** Today's count exists
+for one day; if the parser is broken when we fetch, that number is gone forever.
+So ingest persists the body and commits, *then* parses separately. Fix the
+parser later and `hawa reparse` replays stored snapshots to recover the days.
 
-| Variable | Purpose |
-|---|---|
-| `HAWA_DATABASE_URL` | Defaults to local SQLite |
-| `HAWA_TELEGRAM_BOT_TOKEN` | Needed for Telegram alerts |
-| `HAWA_PURPLEAIR_API_KEY` | Enables the PurpleAir source |
-| `HAWA_OPENAQ_API_KEY` | Enables the OpenAQ source |
-| `HAWA_POLL_INTERVAL_MINUTES` | Default 30 |
+**A 200 OK with zero rows is a failure, not an empty day.** When PMD redesigns
+the page the fetch still succeeds and the parser silently finds nothing. "No
+pollen today" and "our scraper broke" are indistinguishable from outside, and
+only one is safe to serve in March. So the parser raises.
 
-Everything that changes more often than the code — thresholds, the PMD URL,
-which sources are enabled — lives in a database row, not in the source:
+**Every write is idempotent on a natural key.** Which is what makes retries, the
+catch-up run, and `reparse` safe to do aggressively.
 
-```bash
-hawa settings show
-hawa settings set pollen_alert_threshold 15000
-hawa settings set enabled_sources '["pmd_pollen","openaq"]'
-```
+**Health is measured on outcomes.** `hawa health` tracks whether fetches
+actually produce rows *and* how old the newest reading is — a green process
+serving three-week-old counts is exactly the failure worth catching.
 
-Changes take effect within a minute. No redeploy. This exists because PMD moving
-a URL mid-season should not require a release.
+## Also included
+
+A full FastAPI service (`hawa serve`) with OpenAPI docs and a live dashboard.
+It needs a host, so it isn't what's deployed — but it's useful in development
+and it's there if you ever want a dynamic API.
 
 ## Contributing
 
-The most useful contributions, roughly in order:
+Most useful first, roughly:
 
-1. **Run PurpleAir or OpenAQ against a real key** and tell us what breaks.
-2. **Write a scraper for another source** — EPA Pakistan, IQAir, a university
-   sensor network. `src/hawa/sources/base.py` is a small interface and adding
-   one touches nothing else.
-3. **Build something on the API** — a mobile widget, a Telegram bot with nicer
-   formatting, a seasonal chart.
-4. **Historical backfill.** We only have data from the day we started polling.
-   If you can find archived PMD press releases, that history is worth a lot.
+1. **Run PurpleAir or OpenAQ against a real key.** Both are written to their
+   documented APIs but have never made a live authenticated call. They report
+   themselves unavailable without a key rather than pretending to work.
+2. **A source for somewhere else.** `src/hawa/sources/base.py` is a small
+   interface; adding one touches nothing else.
+3. **Anything built on the data.** A bot, a widget, a seasonal chart.
+4. **Historical backfill.** We only hold data from the day polling started. If
+   you can find archived PMD releases, that history is worth a lot.
 
-Every source needs a saved response in `tests/fixtures/` and a parser test.
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Development
+Every source needs a real captured response in `tests/fixtures/` and a parser
+test. See [CONTRIBUTING.md](CONTRIBUTING.md), and read
+[brain/landmines.md](brain/landmines.md) before touching the scraper.
 
 ```bash
-pytest              # full suite
-ruff check .        # lint
-mypy                # types
+pytest && ruff check . && mypy
 ```
-
-`brain/` holds the project's working notes — start with
-[brain/landmines.md](brain/landmines.md) if you're about to change the scraper
-or the ingest path.
-
-## A note on scraping politely
-
-This sends an identifying User-Agent naming the project, polls every 30 minutes
-by default (PMD publishes once a day — you do not need to poll faster), and
-caches identical responses instead of re-storing them. Please do not lower the
-interval. The goal is for this data to be more available, not for PMD's server
-to have a bad time.
 
 ## Licence
 
-MIT. Pollen data is produced by the Pakistan Meteorological Department; air
-quality data by OpenAQ (CC BY 4.0) and PurpleAir contributors. Attribution is
-returned in every API response.
+MIT. Pollen data is produced by the Pakistan Meteorological Department;
+attribution ships in every published file. Not affiliated with or endorsed by
+PMD, and not medical advice.

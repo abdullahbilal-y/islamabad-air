@@ -201,12 +201,23 @@ requested from a GitHub Actions runner, while the identical request from a
 residential connection returns 200. Confirmed 2026-09-05 on the first CI run
 after publishing.
 
-**Why:** The site (or a WAF in front of it) filters by IP reputation, not by
-User-Agent — our client sends a polite identifying UA either way. Cloud provider
-ranges are broadly classified as bots. This is not rate limiting: the very first
-request is refused.
+**Why:** The site (or a WAF in front of it) filters on the network, not on the
+request. Isolated with a controlled probe (`.github/workflows/egress-probe.yml`,
+run 2026-09-05):
 
-**Do:** Two consequences, and neither is a code bug.
+| Request | From home | From Actions (Azure eastus, 74.235.126.85) |
+|---|---|---|
+| our `hawa/0.1` UA | 200 | 403 |
+| browser UA | 200 | 403 |
+| curl default / no UA | 200 | 403 |
+
+All three User-Agents behave identically from each location, and the two
+locations differ completely — so the discriminator is the egress IP. It is not
+rate limiting either: the very first request of the run is refused, with an
+identical 4549-byte WAF block page each time.
+
+**Do:** Re-run the probe from any environment before hosting the ingest there;
+do not infer. Two consequences, and neither is a code bug.
 
 1. **Deployment.** A default AWS/GCP/Azure/Fly/Render host will very likely get
    403 forever. Deploy somewhere with a residential or local Pakistani IP, or
