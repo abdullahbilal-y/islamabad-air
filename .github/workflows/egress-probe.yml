@@ -1,0 +1,30 @@
+# Diagnostic: can a GitHub-hosted runner reach PMD at all, and does anything
+# about the request change the answer?
+#
+# This exists because "the scraper is broken" and "this network cannot reach
+# PMD" look identical from a failed ingest, and the difference decides the whole
+# deployment architecture. Run it from any environment you are considering
+# hosting the ingest in.
+name: Egress probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe PMD from this runner
+        run: |
+          URL="https://weather.gov.pk/rnd/pollen-data"
+          probe() {
+            code=$(curl -sS -o /tmp/body -w "%{http_code}" --max-time 30 -A "$2" "$URL" || echo "000")
+            size=$(wc -c < /tmp/body 2>/dev/null || echo 0)
+            printf '%-28s http=%s bytes=%s\n' "$1" "$code" "$size"
+          }
+          probe "hawa UA" "hawa/0.1 (+https://github.com/abdullahbilal-y/islamabad-air) open-data client"
+          probe "browser UA" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+          probe "curl default" ""
+          echo "--- outbound IP and its owner ---"
+          curl -sS --max-time 20 https://api.ipify.org || true
+          echo
