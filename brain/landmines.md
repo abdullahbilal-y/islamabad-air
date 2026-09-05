@@ -218,6 +218,15 @@ is not — so the discriminator is the egress IP. It is not
 rate limiting either: the very first request of the run is refused, with an
 identical 4549-byte WAF block page each time.
 
+**The mechanism, found 2026-09-05:** `weather.gov.pk` is itself behind
+Cloudflare. So the block is Cloudflare bot management refusing datacenter ASNs,
+not something PMD configured by hand — which is why *every* mainstream cloud is
+refused while a home connection is not. It also means a **Cloudflare Worker gets
+through**, because its subrequest to a Cloudflare-proxied origin never leaves
+that network: measured 200 with real data from colo `ISB`. Whether a *scheduled*
+Worker also gets through is a separate question — Workers run near the caller
+and a cron has none. Do not treat the HTTP result as covering cron.
+
 **Do:** Re-run the probe from any environment before hosting the ingest there;
 do not infer. Two consequences, and neither is a code bug.
 

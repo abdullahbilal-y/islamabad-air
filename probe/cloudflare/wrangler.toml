@@ -1,3 +1,10 @@
 name = "pmd-egress-probe"
 main = "src/worker.js"
 compatibility_date = "2024-09-01"
+
+# Every 5 minutes, only while measuring. A cron Worker has no caller, so this is
+# the only way to observe which colo a scheduled run actually fires from --
+# which is the question the browser-triggered probe cannot answer.
+# Delete this block once you have the answer.
+[triggers]
+crons = ["*/5 * * * *"]

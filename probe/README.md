@@ -19,18 +19,32 @@ variable and the network is.
 | Anthropic fetch service (US datacenter) | **403** | 2026-09-05 |
 | Vercel Functions (AWS Lambda) | not yet measured | — |
 | Netlify Functions (AWS Lambda) | not yet measured | — |
-| Cloudflare Workers (CF edge) | not yet measured | — |
+| Cloudflare Workers, HTTP trigger (colo `ISB`) | **200**, all three UAs, real data | 2026-09-05 |
+| Cloudflare Workers, **cron** trigger | not yet measured — the one that matters | — |
 
 Both Vercel and Netlify run functions on AWS Lambda, so the expectation is 403 —
 but that is an inference, and inference is what these probes exist to replace.
 
-**Try Cloudflare first**, but temper expectations. Two unrelated datacenters
-(Azure, and a US service network) are now both confirmed blocked while a home
-connection works, so "PMD blocks datacenter egress broadly" is looking less like
-a guess with every measurement. Cloudflare is still the one worth spending two
-minutes on, because Vercel and Netlify are two tests of the same AWS Lambda
-question while Workers run on a genuinely different network, from a POP near the
-caller. But the odds got worse, not better.
+**Cloudflare works — and now we know why.** `weather.gov.pk` is itself behind
+Cloudflare (`Server: cloudflare`, `CF-RAY`, IPs in `104.21.x`/`172.67.x`), so the
+403s handed to AWS and Azure are Cloudflare's own bot management blocking
+datacenter ASNs. A Worker's subrequest to a Cloudflare-proxied origin stays
+inside that network, so it is not treated as datacenter egress at all.
+
+**But do not stop at the HTTP probe.** A Worker runs in a POP near its *caller*,
+and the successful probe returned colo `ISB` because it was called from
+Islamabad. A **scheduled** Worker has no caller. Whether cron fires from a colo
+that also gets through is a separate question, and the entire serverless plan
+depends on it — so the worker now has a `scheduled` handler that logs the colo
+and verdict, read back from PMD's own `CF-RAY` header:
+
+```bash
+cd probe/cloudflare
+npx wrangler deploy
+npx wrangler tail        # wait for the next 5-minute tick
+```
+
+Delete the `[triggers]` block from `wrangler.toml` once you have the answer.
 
 **If you run one, please open a PR updating this table.** It is genuinely useful
 to the next person.
