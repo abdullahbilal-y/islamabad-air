@@ -23,4 +23,9 @@
 | `src/hawa/web/templates/dashboard.html` | The dashboard. No build step, no framework. |
 | `tests/fixtures/pmd_pollen_2026-09-05.html` | A real PMD page, byte-for-byte. Do not tidy it. |
 | `tests/conftest.py` | Isolated-DB fixture and the network guard. |
+| `src/hawa/publish.py` | Writes `docs/data/*` — the published dataset, which is the public API. |
+| `worker/src/worker.js` | The Cloudflare relay. The only component that must run inside Pakistan. |
+| `probe/` | Deployable egress probes plus the measured results table. Read before assuming any host can fetch PMD. |
+| `.github/workflows/collect.yml` | The scheduled collection job. |
+| `scripts/` | Optional: run collection directly from a machine in Pakistan. |
 | `brain/` | This directory. |

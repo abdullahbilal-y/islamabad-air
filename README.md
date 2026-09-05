@@ -64,7 +64,59 @@ printed — `"00"`, not `0`). If a cell couldn't be read, `value` is `null`,
 `value_raw` keeps the text, and `needs_review` is `true`. We never guess a
 number, because a plausible wrong number is one nobody ever checks.
 
-## Running it yourself
+## How it collects data without a server
+
+PMD serves requests from Pakistan and refuses them everywhere else. Measured
+across five networks:
+
+| Origin | Result |
+|---|---|
+| Islamabad home connection | **200** |
+| Cloudflare Worker, `ISB` colo | **200** |
+| Cloudflare Worker, `FRA` colo | **403** |
+| GitHub Actions (Azure `eastus`) | **403** |
+| US service network | **403** |
+
+`weather.gov.pk` is behind Cloudflare, so this is almost certainly a country
+rule in their WAF. Either way the operative constraint is: **the fetch has to
+originate in Pakistan.** Nothing else does.
+
+So exactly one step is placed there, and the rest runs on free infrastructure:
+
+```
+someone in Pakistan opens the dashboard
+            │
+            ▼
+  Cloudflare Worker (runs in the ISB colo)
+  fetches PMD ──► caches the page in KV
+            │
+            ▼
+  GitHub Actions, 3×/day
+  pulls the cached page (a workers.dev request — location irrelevant)
+            │
+            ▼
+  the Python parser ──► docs/data/*.json ──► committed ──► GitHub Pages
+```
+
+The Worker (`worker/`) deliberately does **not** parse. There is one parser, in
+Python, tested against a real captured page; a second implementation in
+JavaScript would drift from it silently and nobody would notice until the
+numbers disagreed. It also holds no credentials and never writes to GitHub — CI
+pulls from it. A public endpoint carrying a repo-scoped token is a much worse
+thing to operate than one that can only hand out a copy of a public web page.
+
+It refuses to cache a body without `rows.push` in it, because a 403 block page
+is still a body, and caching one would make staleness invisible.
+
+**The honest weakness:** freshness depends on someone in Pakistan opening the
+page. Nobody looks for a week, the archive has a week-long gap, and PMD keeps no
+archive to backfill from. The dashboard shows a staleness badge rather than
+letting an old reading pass as current. One bookmark tap on a phone also does
+it — no laptop, no Python.
+
+### Running the collection yourself
+
+For a machine in Pakistan that can fetch PMD directly, skipping the relay:
 
 ```bash
 git clone https://github.com/abdullahbilal-y/islamabad-air
@@ -75,46 +127,25 @@ pip install -e ".[dev]"
 hawa poll        # fetch, evaluate alerts, republish docs/data
 ```
 
-`hawa poll` is the whole cycle and the thing you put on a schedule:
+On a schedule:
 
 ```powershell
-# Windows — twice daily, catching up if the machine was asleep
-powershell -ExecutionPolicy Bypass -File scripts\install-task.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install-task.ps1   # Windows
 ```
 
 ```bash
-# macOS/Linux
 0 10,19 * * * /path/to/islamabad-air/scripts/daily-poll.sh >> /tmp/hawa.log 2>&1
 ```
 
-The script commits and pushes only when the data actually changed, so quiet days
-leave no noise in the history.
+And to process a page someone else fetched:
 
-### Why the ingest runs on your machine
-
-Because it has to. **PMD returns HTTP 403 to datacenter IPs.** This is measured,
-not assumed — [`egress-probe.yml`](.github/workflows/egress-probe.yml) sends the
-same three requests (our UA, a browser UA, no UA) and gets:
-
-| Request | From a home connection | From a GitHub runner (Azure) |
-|---|---|---|
-| our `hawa/0.1` UA | 200 | 403 |
-| browser UA | 200 | 403 |
-| no UA | 200 | 403 |
-
-The User-Agent changes nothing; the egress IP changes everything. So GitHub
-Actions, AWS, Fly, Render and Netlify Functions will all very likely fetch
-nothing, while a laptop on a normal connection works fine. Run the probe from
-any host you're considering rather than trusting this table.
+```bash
+hawa ingest-file snapshot.html --source pmd_pollen --fetched-at 2026-09-05T12:00:00Z
+```
 
 Please don't work around a 403 by spoofing a browser or rotating IPs. This is
-public data being read politely, twice a day, with an identifying User-Agent. If
-PMD doesn't want datacenter traffic, the answer is to run somewhere else.
-
-The honest cost of this: the ingest only runs when your machine is on, so gaps
-happen. A missed day can't be recovered — PMD keeps no archive — and the
-dashboard flags the data as stale rather than letting an old number look
-current.
+public data read politely, a few times a day, with an identifying User-Agent.
+`probe/` holds deployable probes if you want to measure another host.
 
 ## Alerts
 
