@@ -1,0 +1,9 @@
+observed_date,sector,pollen_type,value,value_raw,unit,source_category,needs_review,source
+2026-09-04,H-8,Acacia,0,00,grains/m3,Absent,0,pmd_pollen
+2026-09-04,H-8,Alternaria,21,21,grains/m3,Low,0,pmd_pollen
+2026-09-04,H-8,Cannabis,36,36,grains/m3,Moderate,0,pmd_pollen
+2026-09-04,H-8,Dandelion,0,00,grains/m3,Absent,0,pmd_pollen
+2026-09-04,H-8,Eucalyptus,0,00,grains/m3,Absent,0,pmd_pollen
+2026-09-04,H-8,Grasses,12,12,grains/m3,Moderate,0,pmd_pollen
+2026-09-04,H-8,Paper Mulberry,7,07,grains/m3,Low,0,pmd_pollen
+2026-09-04,H-8,Pines,0,00,grains/m3,Absent,0,pmd_pollen

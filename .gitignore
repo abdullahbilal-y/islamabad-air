@@ -14,7 +14,11 @@ env/
 .ruff_cache/
 .coverage
 htmlcov/
-*.csv
+# Ad-hoc exports, but never the published dataset or test fixtures --
+# a blanket *.csv silently kept docs/data/pollen.csv out of the repo and
+# 404'd it on the live site.
+/*.csv
+!docs/data/*.csv
 !tests/fixtures/*.csv
 .DS_Store
 .idea/
