@@ -54,6 +54,7 @@ Changes apply within 60 seconds (settings cache TTL). No restart.
 | `/healthz` 503, `failure_stage: parse` | PMD changed the page shape | Inspect the stored snapshot body, fix `parsers/pmd.py`, then `hawa reparse` |
 | `/healthz` 503, reason mentions "stale" | Fetches fine, upstream stopped publishing | Check the page by hand; nothing to fix in code |
 | `failure_stage: network`, HTTP 500 | PMD host is down (happens often) | Wait, or point at another PMD host via `hawa settings set pmd_pollen_url` |
+| `failure_stage: network`, HTTP 403 | Your egress IP is a datacenter range | Not a bug — landmine #12. Needs a different egress route, not a code change |
 | Source shows `available: false` | Missing API key | Set `HAWA_PURPLEAIR_API_KEY` / `HAWA_OPENAQ_API_KEY` |
 | Alerts not sending | `alerts_enabled` false, or no token | `hawa settings show`; check `HAWA_TELEGRAM_BOT_TOKEN`; inspect `GET /v1/alerts` for `last_error` |
 | `DetachedInstanceError` | Reading ORM attrs after `session_scope()` exits | Landmine #2 |
@@ -68,6 +69,10 @@ hawa reparse --all --since 2026-04-01   # replay everything in a window
 This works only because the raw bodies are stored and every write is idempotent.
 
 ## Deploying
+
+**Check egress first.** PMD 403s datacenter IPs (landmine #12). Run one
+`hawa ingest` on the target host before anything else; if it 403s, that host
+cannot be used as-is regardless of how the rest is configured.
 
 Any single container. Run `hawa serve --host 0.0.0.0`. The scheduler runs
 in-process, so **run exactly one instance** unless you set

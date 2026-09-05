@@ -93,6 +93,19 @@ overclaim:
   during development. `weather.gov.pk` was the host that worked. The URL lives
   in a settings row precisely because this keeps happening.
 
+### Before you deploy this to a cloud host, read this
+
+**PMD returns HTTP 403 to datacenter IPs.** The exact request that works from a
+home connection is refused from a GitHub Actions runner — first request, no rate
+limiting involved, and the User-Agent makes no difference. A default deployment
+on AWS, GCP, Azure, Fly or Render will very likely never fetch anything.
+
+Run one `hawa ingest` from your target host before building anything on top of
+it. If you get a 403, you need a residential or Pakistani egress route, not a
+code change. Please do not work around this by spoofing a browser or rotating
+IPs — this is public data being read politely, and if PMD does not want
+datacenter traffic the answer is to run somewhere else.
+
 ## Design: three decisions that shape everything
 
 Scraping a government page you have no agreement with is a specific engineering

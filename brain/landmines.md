@@ -192,3 +192,32 @@ restart churn hides the actual signal.
 orchestrator to confirm the probe wiring behaves as intended.
 
 **Refs:** `src/hawa/main.py::livez`, `src/hawa/api/routes.py::healthz`
+
+---
+
+## 12. PMD blocks datacenter IPs — this cannot be deployed to a plain cloud host
+**What:** `https://weather.gov.pk/rnd/pollen-data` returns **HTTP 403** when
+requested from a GitHub Actions runner, while the identical request from a
+residential connection returns 200. Confirmed 2026-09-05 on the first CI run
+after publishing.
+
+**Why:** The site (or a WAF in front of it) filters by IP reputation, not by
+User-Agent — our client sends a polite identifying UA either way. Cloud provider
+ranges are broadly classified as bots. This is not rate limiting: the very first
+request is refused.
+
+**Do:** Two consequences, and neither is a code bug.
+
+1. **Deployment.** A default AWS/GCP/Azure/Fly/Render host will very likely get
+   403 forever. Deploy somewhere with a residential or local Pakistani IP, or
+   put an egress proxy in front of the fetch. Verify with one `hawa ingest` from
+   the target host *before* building anything on top of the deployment.
+2. **CI.** The `upstream-check` job treats a 403 as inconclusive and passes.
+   A job that fails every single run teaches everyone to ignore it, which
+   destroys the one signal it exists to give — a genuine parse break.
+
+Do **not** "fix" this by spoofing a browser User-Agent or rotating IPs. This is
+public data we are reading politely; if PMD does not want datacenter traffic,
+the answer is to run somewhere else, not to disguise the client.
+
+**Refs:** `.github/workflows/ci.yml` (upstream-check), `src/hawa/sources/base.py::build_client`

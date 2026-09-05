@@ -70,7 +70,19 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e .
+      # PMD blocks datacenter IPs, so a 403 here means "GitHub's runner is
+      # blocked", not "the scraper is broken" -- treat it as inconclusive.
+      # Anything else (a parse failure especially) is a real signal and fails.
       - name: Ingest from the live PMD page
         env:
           HAWA_DATABASE_URL: "sqlite:///./upstream.db"
-        run: hawa ingest
+        run: |
+          set +e
+          output=$(hawa ingest 2>&1)
+          status=$?
+          echo "$output"
+          if [ $status -ne 0 ] && echo "$output" | grep -q "HTTP 403"; then
+            echo "::notice::PMD returned 403 to this runner's IP. Inconclusive, not a failure."
+            exit 0
+          fi
+          exit $status
