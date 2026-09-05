@@ -1,0 +1,106 @@
+{
+  "attribution": "Pollen counts measured and published by the Pakistan Meteorological Department (weather.gov.pk). Digitised by Hawa, an independent open-source project - not an official PMD service, and not medical advice.",
+  "generated_at": "2026-09-05T19:54:32.807356+00:00",
+  "observed_date": "2026-09-04",
+  "readings": [
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Acacia",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Absent",
+      "unit": "grains/m3",
+      "value": 0,
+      "value_raw": "00"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Alternaria",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Low",
+      "unit": "grains/m3",
+      "value": 21,
+      "value_raw": "21"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Cannabis",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Moderate",
+      "unit": "grains/m3",
+      "value": 36,
+      "value_raw": "36"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Dandelion",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Absent",
+      "unit": "grains/m3",
+      "value": 0,
+      "value_raw": "00"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Eucalyptus",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Absent",
+      "unit": "grains/m3",
+      "value": 0,
+      "value_raw": "00"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Grasses",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Moderate",
+      "unit": "grains/m3",
+      "value": 12,
+      "value_raw": "12"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Paper Mulberry",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Low",
+      "unit": "grains/m3",
+      "value": 7,
+      "value_raw": "07"
+    },
+    {
+      "needs_review": false,
+      "observed_date": "2026-09-04",
+      "pollen_type": "Pines",
+      "sector": "H-8",
+      "source": "pmd_pollen",
+      "source_category": "Absent",
+      "unit": "grains/m3",
+      "value": 0,
+      "value_raw": "00"
+    }
+  ],
+  "sectors": [
+    {
+      "band": "absent",
+      "sector": "H-8",
+      "top_type": "Cannabis",
+      "top_value": 36,
+      "total": 76,
+      "types_reported": 8
+    }
+  ],
+  "source_url": "https://weather.gov.pk/rnd/pollen-data"
+}

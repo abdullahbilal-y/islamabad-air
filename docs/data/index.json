@@ -1,0 +1,33 @@
+{
+  "attribution": "Pollen counts measured and published by the Pakistan Meteorological Department (weather.gov.pk). Digitised by Hawa, an independent open-source project - not an official PMD service, and not medical advice.",
+  "days_held": 1,
+  "endpoints": {
+    "csv": "data/pollen.csv",
+    "latest": "data/latest.json",
+    "manifest": "data/index.json",
+    "month": "data/months/{YYYY-MM}.json"
+  },
+  "first_date": "2026-09-04",
+  "generated_at": "2026-09-05T19:54:32.813836+00:00",
+  "generator": "hawa 0.1.0",
+  "last_date": "2026-09-04",
+  "months": [
+    "2026-09"
+  ],
+  "pollen_types": [
+    "Acacia",
+    "Alternaria",
+    "Cannabis",
+    "Dandelion",
+    "Eucalyptus",
+    "Grasses",
+    "Paper Mulberry",
+    "Pines"
+  ],
+  "repository": "https://github.com/abdullahbilal-y/islamabad-air",
+  "sectors": [
+    "H-8"
+  ],
+  "source_url": "https://weather.gov.pk/rnd/pollen-data",
+  "total_readings": 8
+}

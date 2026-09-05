@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hawa — Islamabad Pollen Data</title>
+<meta name="description" content="Daily sector-wise pollen counts for Islamabad, digitised from the Pakistan Meteorological Department and published as an open dataset.">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfaf7; --panel: #fff; --ink: #1b1a17; --muted: #6b675e;
+    --line: #e5e1d8; --accent: #2f6f4f;
+    --absent: #9aa39c; --low: #4a9d6b; --moderate: #d7a13b;
+    --high: #d9713c; --very_high: #b6373a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16171a; --panel:#1e2024; --ink:#eceae5; --muted:#9a978f;
+            --line:#2e3138; --accent:#6cc394; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 980px; margin:0 auto; padding:32px 20px 64px; }
+  header { border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:26px; }
+  h1 { margin:0 0 6px; font-size:26px; letter-spacing:-0.01em; }
+  .sub { color:var(--muted); margin:0; font-size:14px; max-width:64ch; }
+  .meta { margin-top:12px; font-size:13px; color:var(--muted); }
+  .cards { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .card h2 { margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted);
+             text-transform:uppercase; letter-spacing:.06em; }
+  .total { font-size:30px; font-weight:650; letter-spacing:-0.02em; margin:4px 0 2px; }
+  .unit { font-size:13px; color:var(--muted); font-weight:400; }
+  .band { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px;
+          font-weight:600; color:#fff; margin-top:6px; }
+  .band.absent{background:var(--absent)} .band.low{background:var(--low)}
+  .band.moderate{background:var(--moderate)} .band.high{background:var(--high)}
+  .band.very_high{background:var(--very_high)}
+  .peak { font-size:13px; color:var(--muted); margin-top:8px; }
+  section { margin-top:36px; }
+  section > h2 { font-size:15px; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase;
+       letter-spacing:.05em; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .scroll { overflow-x:auto; }
+  .note { background:var(--panel); border:1px dashed var(--line); border-radius:10px;
+          padding:20px; color:var(--muted); }
+  code { background:rgba(127,127,127,.14); padding:1px 6px; border-radius:4px; font-size:13px; }
+  pre { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+        padding:14px; overflow-x:auto; font-size:13px; }
+  footer { margin-top:48px; padding-top:18px; border-top:1px solid var(--line);
+           font-size:13px; color:var(--muted); }
+  a { color:var(--accent); }
+  .warn { color:var(--high); font-size:12px; }
+  .stale { background:#d9713c; color:#fff; padding:2px 8px; border-radius:999px;
+           font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Islamabad pollen counts</h1>
+    <p class="sub">
+      The Pakistan Meteorological Department measures pollen daily in sectors H-8,
+      E-8, G-6 and F-10 and publishes it as a page you cannot query. This mirrors
+      those numbers, keeps the history, and republishes them as open data.
+    </p>
+    <p class="meta">
+      <span id="asof"></span>
+      <a href="data/latest.json">latest.json</a> ·
+      <a href="data/pollen.csv">full CSV</a> ·
+      <a href="data/index.json">manifest</a> ·
+      <a href="https://github.com/abdullahbilal-y/islamabad-air">source</a>
+    </p>
+  </header>
+
+  <div class="cards" id="cards"></div>
+  <div id="fallback"></div>
+
+  <section id="detail-section" hidden>
+    <h2>Every pollen type, by sector</h2>
+    <div class="scroll"><table id="detail">
+      <thead><tr><th>Pollen type</th></tr></thead><tbody></tbody>
+    </table></div>
+    <p class="meta">
+      Counts are grains per cubic metre over 24 hours. A blank cell means that
+      sector's trap reported nothing for that type — it is not a zero.
+    </p>
+  </section>
+
+  <section>
+    <h2>Using the data</h2>
+    <p class="sub">
+      These files are the API. No key, no rate limit, no server to go down.
+    </p>
+    <pre><code>curl https://abdullahbilal-y.github.io/islamabad-air/data/latest.json
+curl https://abdullahbilal-y.github.io/islamabad-air/data/months/2026-09.json
+curl https://abdullahbilal-y.github.io/islamabad-air/data/pollen.csv</code></pre>
+  </section>
+
+  <footer id="attribution"></footer>
+</div>
+
+<script>
+const BANDS = ["absent","low","moderate","high","very_high"];
+const fmt = new Intl.NumberFormat("en-US");
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+function renderCards(day) {
+  const host = document.getElementById("cards");
+  host.replaceChildren();
+  for (const s of day.sectors) {
+    const card = el("div","card");
+    card.append(el("h2", null, s.sector));
+    const total = el("div","total", fmt.format(s.total));
+    total.append(el("span","unit"," grains/m³"));
+    card.append(total);
+    const band = BANDS.includes(s.band) ? s.band : "absent";
+    card.append(el("span","band "+band, band.replace("_"," ")));
+    if (s.top_type) {
+      card.append(el("div","peak", `Highest: ${s.top_type} — ${fmt.format(s.top_value)}`));
+    }
+    card.append(el("div","peak", `${s.types_reported} type(s) reported`));
+    host.append(card);
+  }
+}
+
+function renderTable(day) {
+  const sectors = day.sectors.map(s => s.sector);
+  if (!sectors.length) return;
+  const table = document.getElementById("detail");
+  const head = table.querySelector("thead tr");
+  head.replaceChildren(el("th", null, "Pollen type"));
+  for (const s of sectors) head.append(el("th", null, s));
+
+  const byType = new Map();
+  for (const r of day.readings) {
+    if (!byType.has(r.pollen_type)) byType.set(r.pollen_type, new Map());
+    byType.get(r.pollen_type).set(r.sector, r);
+  }
+
+  const body = table.querySelector("tbody");
+  body.replaceChildren();
+  for (const [type, bySector] of [...byType].sort((a,b) => a[0].localeCompare(b[0]))) {
+    const tr = el("tr");
+    tr.append(el("td", null, type));
+    for (const sector of sectors) {
+      const r = bySector.get(sector);
+      const td = el("td","num");
+      if (!r) {
+        td.textContent = "";
+      } else if (r.value === null) {
+        // Show what the source actually printed rather than a guessed number.
+        td.append(el("span","warn", r.value_raw ?? "?"));
+        td.title = "Could not be parsed as a number; showing the raw value.";
+      } else {
+        td.textContent = fmt.format(r.value);
+      }
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+  document.getElementById("detail-section").hidden = false;
+}
+
+function daysOld(iso) {
+  const then = new Date(iso + "T00:00:00Z");
+  return Math.floor((Date.now() - then.getTime()) / 86400000);
+}
+
+fetch("data/latest.json", { cache: "no-cache" })
+  .then(r => r.ok ? r.json() : Promise.reject(new Error("no data")))
+  .then(day => {
+    const age = daysOld(day.observed_date);
+    const asof = document.getElementById("asof");
+    asof.textContent = `Reading for ${day.observed_date} · `;
+    // The ingest runs on somebody's machine, so gaps are a normal failure mode.
+    // Say so on the page rather than letting a stale number look current.
+    if (age > 2) {
+      const flag = el("span","stale", `${age} days old`);
+      flag.title = "The ingest has not run recently. See the repository for why.";
+      asof.append(flag, document.createTextNode(" · "));
+    }
+    document.getElementById("attribution").textContent = day.attribution;
+    renderCards(day);
+    renderTable(day);
+  })
+  .catch(() => {
+    document.getElementById("fallback").append(
+      Object.assign(el("div","note"), {
+        textContent: "No data published yet. Run `hawa poll` on a machine that can reach PMD."
+      })
+    );
+  });
+</script>
+</body>
+</html>
