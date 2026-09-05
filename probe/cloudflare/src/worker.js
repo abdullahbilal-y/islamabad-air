@@ -69,7 +69,22 @@ async function runAll() {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
+    // `wrangler tail` buffers when it is not attached to a terminal, so the
+    // cron result is stashed in KV and served here instead. Polling a URL is
+    // also the only way to observe a cron without sitting and watching a stream.
+    if (new URL(request.url).pathname === "/last-cron") {
+      const stored = await env.PROBE.get("last_cron");
+      const history = await env.PROBE.get("colo_history");
+      return Response.json(
+        {
+          last_cron: stored ? JSON.parse(stored) : "no cron has run yet",
+          colo_history: history ? JSON.parse(history) : [],
+        },
+        { headers: { "cache-control": "no-store" } },
+      );
+    }
+
     const { results, usable } = await runAll();
     return Response.json(
       {
@@ -92,16 +107,26 @@ export default {
   async scheduled(event, env, ctx) {
     const { results, usable } = await runAll();
     const colo = Object.values(results).find((r) => r.colo)?.colo ?? "unknown";
-    // Surfaced through `wrangler tail`. If this says USABLE, the ingest can run
-    // entirely on Cloudflare's free tier and no machine at home is needed.
-    console.log(
-      JSON.stringify({
-        trigger: "cron",
-        cron: event.cron,
-        served_by_colo: colo,
-        verdict: usable ? "USABLE on the cron path" : "BLOCKED on the cron path",
-        results,
-      }),
-    );
+
+    const record = {
+      trigger: "cron",
+      cron: event.cron,
+      at: new Date().toISOString(),
+      served_by_colo: colo,
+      verdict: usable ? "USABLE on the cron path" : "BLOCKED on the cron path",
+      results,
+    };
+
+    // Keep a rolling list of the colos seen. One sample cannot distinguish
+    // "cron always runs in Frankfurt" from "cron runs wherever it likes and we
+    // got unlucky once" -- and those two imply completely different
+    // architectures, so the question deserves more than a single data point.
+    const priorRaw = await env.PROBE.get("colo_history");
+    const history = priorRaw ? JSON.parse(priorRaw) : [];
+    history.push({ at: record.at, colo, usable });
+
+    await env.PROBE.put("last_cron", JSON.stringify(record));
+    await env.PROBE.put("colo_history", JSON.stringify(history.slice(-40)));
+    console.log(JSON.stringify(record));
   },
 };

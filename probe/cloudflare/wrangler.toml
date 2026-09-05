@@ -2,9 +2,19 @@ name = "pmd-egress-probe"
 main = "src/worker.js"
 compatibility_date = "2024-09-01"
 
-# Every 5 minutes, only while measuring. A cron Worker has no caller, so this is
-# the only way to observe which colo a scheduled run actually fires from --
-# which is the question the browser-triggered probe cannot answer.
-# Delete this block once you have the answer.
+# Smart Placement picks a location based on the ORIGIN a Worker talks to rather
+# than the caller. PMD's origin is in Pakistan and the block is geographic, so
+# this is the only Cloudflare mechanism that could put a cron somewhere that is
+# not refused. Under test -- see probe/README.md for the result.
+[placement]
+mode = "smart"
+
+# Results are stashed here because `wrangler tail` buffers when it is not on a
+# terminal, and because polling a URL beats watching a stream for a cron.
+[[kv_namespaces]]
+binding = "PROBE"
+id = "724c7634e4d94c1c865b2e0c8a7cf109"
+
+# Two minutes while measuring. Remove once the question is settled.
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/2 * * * *"]

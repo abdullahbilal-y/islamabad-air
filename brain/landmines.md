@@ -218,14 +218,20 @@ is not — so the discriminator is the egress IP. It is not
 rate limiting either: the very first request of the run is refused, with an
 identical 4549-byte WAF block page each time.
 
-**The mechanism, found 2026-09-05:** `weather.gov.pk` is itself behind
-Cloudflare. So the block is Cloudflare bot management refusing datacenter ASNs,
-not something PMD configured by hand — which is why *every* mainstream cloud is
-refused while a home connection is not. It also means a **Cloudflare Worker gets
-through**, because its subrequest to a Cloudflare-proxied origin never leaves
-that network: measured 200 with real data from colo `ISB`. Whether a *scheduled*
-Worker also gets through is a separate question — Workers run near the caller
-and a cron has none. Do not treat the HTTP result as covering cron.
+**The mechanism, revised 2026-09-06:** `weather.gov.pk` is behind Cloudflare,
+and the rule is almost certainly **geographic**, not datacenter-ASN. A Cloudflare
+Worker in `ISB` gets 200; the same Worker in `FRA` gets 403. Both are equally
+"inside Cloudflare", so the network path is not what decides it — the origin
+country is. Every measurement fits "Pakistan served, elsewhere refused".
+
+(We cannot separate geo-blocking from datacenter-blocking *outside* Pakistan,
+having no non-Pakistani residential test. It does not change the constraint.)
+
+The trap this sets: a Worker runs in a POP near its **caller**, so an
+HTTP-triggered probe called from Islamabad returns a cheerful `ISB` 200 — and a
+cron, which has no caller, ran from Frankfurt and was refused. Shipping on the
+HTTP result would have produced an ingest that worked in every manual test and
+failed the moment it ran unattended.
 
 **Do:** Re-run the probe from any environment before hosting the ingest there;
 do not infer. Two consequences, and neither is a code bug.

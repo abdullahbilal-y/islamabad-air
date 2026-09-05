@@ -19,32 +19,59 @@ variable and the network is.
 | Anthropic fetch service (US datacenter) | **403** | 2026-09-05 |
 | Vercel Functions (AWS Lambda) | not yet measured | — |
 | Netlify Functions (AWS Lambda) | not yet measured | — |
-| Cloudflare Workers, HTTP trigger (colo `ISB`) | **200**, all three UAs, real data | 2026-09-05 |
-| Cloudflare Workers, **cron** trigger | not yet measured — the one that matters | — |
+| Cloudflare Workers, HTTP trigger, colo `ISB` | **200**, all three UAs, real data | 2026-09-05 |
+| Cloudflare Workers, cron trigger, colo `FRA` | **403**, all three UAs | 2026-09-06 |
 
 Both Vercel and Netlify run functions on AWS Lambda, so the expectation is 403 —
 but that is an inference, and inference is what these probes exist to replace.
 
-**Cloudflare works — and now we know why.** `weather.gov.pk` is itself behind
-Cloudflare (`Server: cloudflare`, `CF-RAY`, IPs in `104.21.x`/`172.67.x`), so the
-403s handed to AWS and Azure are Cloudflare's own bot management blocking
-datacenter ASNs. A Worker's subrequest to a Cloudflare-proxied origin stays
-inside that network, so it is not treated as datacenter egress at all.
+**It is geography, not datacenter.** An earlier draft of this file claimed the
+block was datacenter-ASN filtering, and that a Cloudflare Worker got through
+because its subrequest to a Cloudflare-proxied origin never leaves that network.
+The cron measurement disproves it: a Worker in `FRA` is just as much "inside
+Cloudflare" as one in `ISB`, and `FRA` is refused.
 
-**But do not stop at the HTTP probe.** A Worker runs in a POP near its *caller*,
-and the successful probe returned colo `ISB` because it was called from
-Islamabad. A **scheduled** Worker has no caller. Whether cron fires from a colo
-that also gets through is a separate question, and the entire serverless plan
-depends on it — so the worker now has a `scheduled` handler that logs the colo
-and verdict, read back from PMD's own `CF-RAY` header:
+Every measurement fits one rule instead — **requests from Pakistan are served,
+requests from elsewhere are refused**:
+
+- Islamabad home connection → 200
+- Cloudflare Worker, `ISB` colo → 200
+- Cloudflare Worker, `FRA` colo → 403
+- Azure `eastus`, US service network → 403
+
+`weather.gov.pk` is behind Cloudflare (`Server: cloudflare`, `CF-RAY`, IPs in
+`104.21.x`/`172.67.x`), so this is most likely a country rule in their WAF. What
+this does *not* separate is geo-blocking from datacenter-blocking outside
+Pakistan, since we have no non-Pakistani residential test. Either way the
+operative constraint is the same: **the fetch has to originate in Pakistan.**
+
+**This is why the HTTP probe alone would have misled us.** A Worker runs in a
+POP near its *caller*, so the successful probe returned `ISB` only because it was
+called from Islamabad. A scheduled Worker has no caller and Cloudflare put it in
+Frankfurt. Had we shipped on the HTTP result, the ingest would have failed the
+first time it ran unattended — the exact failure this repo is built to make
+loud rather than silent.
+
+The worker's `scheduled` handler logs the serving colo and verdict, read back
+from PMD's own `CF-RAY` header (`request.cf` does not exist in a cron):
 
 ```bash
 cd probe/cloudflare
+npx wrangler kv namespace create PROBE   # then put the id in wrangler.toml
 npx wrangler deploy
-npx wrangler tail        # wait for the next 5-minute tick
+curl https://<your-worker>.workers.dev/last-cron
 ```
 
-Delete the `[triggers]` block from `wrangler.toml` once you have the answer.
+`/last-cron` returns the most recent scheduled run plus a history of the colos
+it fired from. It exists because `wrangler tail` buffers when it is not attached
+to a terminal, and because one sample cannot tell "cron always runs in Frankfurt"
+from "cron runs wherever it likes and we got unlucky once" — two answers that
+imply completely different architectures.
+
+The `kv_namespaces` id in `wrangler.toml` is this project's namespace, not a
+secret, but it is account-scoped: create your own with the command above.
+
+Delete the `[triggers]` block once you have the answer.
 
 **If you run one, please open a PR updating this table.** It is genuinely useful
 to the next person.
