@@ -1,0 +1,6 @@
+# Normalise line endings in source.
+* text=auto eol=lf
+
+# Captured upstream responses are evidence of what the source actually serves.
+# Never let git rewrite their bytes -- the parser tests assert against them.
+tests/fixtures/** -text -diff
