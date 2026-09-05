@@ -16,6 +16,7 @@ variable and the network is.
 |---|---|---|
 | Home connection (Islamabad) | **200**, all three UAs | 2026-09-05 |
 | GitHub Actions (Azure, `eastus`) | **403**, all three UAs | 2026-09-05 |
+| Anthropic fetch service (US datacenter) | **403** | 2026-09-05 |
 | Vercel Functions (AWS Lambda) | not yet measured | — |
 | Netlify Functions (AWS Lambda) | not yet measured | — |
 | Cloudflare Workers (CF edge) | not yet measured | — |
@@ -23,11 +24,13 @@ variable and the network is.
 Both Vercel and Netlify run functions on AWS Lambda, so the expectation is 403 —
 but that is an inference, and inference is what these probes exist to replace.
 
-**Try Cloudflare first.** Vercel and Netlify are two tests of nearly the same
-question, since both are AWS Lambda underneath. Cloudflare Workers run on a
-different network entirely, from a POP near the caller rather than us-east-1, so
-it is the one with a genuinely different chance of succeeding. It is also the
-fastest to deploy.
+**Try Cloudflare first**, but temper expectations. Two unrelated datacenters
+(Azure, and a US service network) are now both confirmed blocked while a home
+connection works, so "PMD blocks datacenter egress broadly" is looking less like
+a guess with every measurement. Cloudflare is still the one worth spending two
+minutes on, because Vercel and Netlify are two tests of the same AWS Lambda
+question while Workers run on a genuinely different network, from a POP near the
+caller. But the odds got worse, not better.
 
 **If you run one, please open a PR updating this table.** It is genuinely useful
 to the next person.

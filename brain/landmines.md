@@ -211,8 +211,10 @@ run 2026-09-05):
 | browser UA | 200 | 403 |
 | curl default / no UA | 200 | 403 |
 
-All three User-Agents behave identically from each location, and the two
-locations differ completely — so the discriminator is the egress IP. It is not
+A third network (a US service provider's fetch infrastructure, unrelated to
+Azure) also returned 403 on 2026-09-05. All three User-Agents behave identically
+from each location, two unrelated datacenters are blocked and a home connection
+is not — so the discriminator is the egress IP. It is not
 rate limiting either: the very first request of the run is refused, with an
 identical 4549-byte WAF block page each time.
 
