@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Types
+        run: mypy
+
+      - name: Tests
+        run: pytest -q
+
+      # A syntax check is not a runtime check. Everything above passes with a
+      # broken lifespan, a missing template, or an unroutable dependency --
+      # this step actually boots the app and talks to it.
+      - name: Smoke test the running app
+        env:
+          HAWA_ENABLE_SCHEDULER: "false"
+          HAWA_DATABASE_URL: "sqlite:///./ci.db"
+        run: |
+          hawa init-db
+          hawa serve --host 127.0.0.1 --port 8000 &
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/livez > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/livez
+          curl -sf http://127.0.0.1:8000/openapi.json > /dev/null
+          curl -sf http://127.0.0.1:8000/ > /dev/null
+          echo "app booted and served"
+
+  # Separate, and allowed to fail: this one talks to a government website we do
+  # not control. It is an early warning that PMD changed their page -- not a
+  # reason to block a pull request that has nothing to do with it.
+  upstream-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Ingest from the live PMD page
+        env:
+          HAWA_DATABASE_URL: "sqlite:///./upstream.db"
+        run: hawa ingest

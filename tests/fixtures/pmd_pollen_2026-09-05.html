@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1,
+            shrink-to-fit=no">
+    <meta name="description" content="Pakisan Meteorological Department">
+
+    <title>Pakistan Meteorological Department - PMD</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="https://weather.gov.pk/front/images/web-logo.png">
+
+    <!-- All CSS files -->
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/vendor/font-awesome.css">
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/vendor/slick.css">
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/vendor/slick-theme.css">
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/app.css">
+    <link rel="stylesheet" href="https://weather.gov.pk/newtemplate/assets/css/style.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://weather.gov.pk/front/css/toogle-btn.css">
+    <style>
+        .light-logo img,
+        .dark-logo img {
+            height: 53px !important;
+        }
+
+        .weather-banner-2 {
+            background: url("front/assets/MainWebsite/bg-4.png");
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        .dark .weather-banner-2 {
+            background: url("front/assets/MainWebsite/bg-2.png");
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        /* RTL support */
+        .rtl-table {
+            direction: rtl;
+            /* flip layout */
+            text-align: right;
+            /* default text alignment */
+        }
+
+        .rtl-table table th,
+        .rtl-table table td {
+            text-align: right;
+            /* ensure cells are right-aligned */
+        }
+
+        .rtl-table .nav-tabs {
+            float: right;
+            /* align tabs to right for RTL */
+        }
+
+        .rtl-table .nav-tabs .nav-link {
+            text-align: center;
+            /* keep button text centered */
+        }
+
+        .dark .footer {
+            border-top: 1px solid #fff8f8 !important;
+        }
+
+        .english-font-popins {
+            font-family: "Poppins", sans-serif;
+        }
+
+        .icon {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .icon>li {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            list-style: none;
+        }
+
+        .icon>li>a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .icon i {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .icon svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        .icon>.social-icon {
+            border: 1px solid;
+            border-radius: 50%;
+        }
+
+        .icon>.social-icon>a {
+            padding: 5px;
+        }
+
+        .switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lang-switch {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            margin-left: 6px;
+        }
+
+        .search-item {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        @media (max-width:991px) {
+
+            .icon {
+                justify-content: center;
+                gap: 12px;
+            }
+
+            .search-item {
+                margin-left: 0;
+            }
+        }
+
+        .lang-switch {
+            display: inline-flex;
+            align-items: center;
+            background: #f2f2f2;
+            border: 1px solid #dcdcdc;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .lang-switch a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            color: #555;
+            transition: .2s ease;
+            line-height: 1;
+        }
+
+        .lang-switch a:hover {
+            background: #e8e8e8;
+        }
+
+        .lang-switch a.active {
+            background: #FFA500;
+            /* Use your primary color if different */
+            color: #fff;
+        }
+/* ===========================
+   NAVBAR
+=========================== */
+
+.navbar{
+    padding: .35rem 0;
+    position: relative;  /* positioning parent for mega_menu */
+}
+
+.home-navbar-div{
+    justify-content: center !important;
+    margin-left: 0 !important;
+}
+
+.mainmenu{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.15rem;
+    margin:0;
+    padding:0;
+    list-style:none;
+}
+
+.mainmenu > li{
+    position:static;
+    list-style:none;
+}
+
+.mainmenu > li > a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:42px;
+    padding:0 10px;
+    font-size:14px;
+    text-decoration:none;
+    white-space:nowrap;
+    border-radius:8px;
+    transition:all .25s ease;
+}
+
+.mainmenu > li > a:hover{
+    background:rgba(255,255,255,.12);
+}
+
+.mainmenu > li > a.active{
+    font-weight:600;
+}
+
+
+/* ===========================
+   DROPDOWN ARROW
+=========================== */
+
+.menu-item-has-children > a::after{
+    content:"";
+    display:inline-block;
+    margin-left:6px;
+    width:5px;
+    height:5px;
+    border-right:1.5px solid currentColor;
+    border-bottom:1.5px solid currentColor;
+    transform:rotate(45deg);
+    transition:.25s;
+}
+
+.menu-item-has-children:hover > a::after{
+    transform:rotate(225deg);
+}
+
+
+/* ===========================
+   MEGA MENU  –  centered on the .navbar (position:relative parent)
+=========================== */
+
+.menu-item-has-children > .mega_menu{
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(1100px, 94vw);
+    margin-top:0;
+    background:#fff;
+    border:1px solid #e8e8e8;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.06);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+    z-index:1050;
+}
+
+/* Invisible hover bridge – fills the gap between the link and the card */
+.menu-item-has-children > .mega_menu::before{
+    content:"";
+    position:absolute;
+    top:-20px;
+    left:0;
+    right:0;
+    height:20px;
+}
+
+.menu-item-has-children:hover > .mega_menu{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+}
+
+
+/* ===========================
+   CARD
+=========================== */
+
+.mega_menu .row{
+    align-items:stretch;
+}
+
+.mega_image{
+    height:100%;
+    border:none;
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+}
+
+.mega_image img{
+    width:100%;
+    height:220px;
+    object-fit:cover;
+    object-position:center;
+    display:block;
+}
+
+.mega_image .card-body{
+    padding:22px;
+}
+
+
+/* ===========================
+   DESCRIPTION
+=========================== */
+
+.mega_menu_text_description{
+    line-height:1.8;
+    text-align:justify;
+    color:#555;
+}
+
+
+/* ===========================
+   LINKS GRID
+=========================== */
+
+.mega_menu .card-body > .row{
+    row-gap:10px;
+}
+
+
+/* ===========================
+   LINK CARD
+=========================== */
+
+.megamenu-text{
+    height:100%;
+}
+
+.megamenu-text a{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    min-height:48px;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid #ececec;
+    background:#fafafa;
+    text-decoration:none;
+    transition:all .25s ease;
+}
+
+/* FA5 chevron-right icon */
+.megamenu-text a::after{
+    content:"\f054";
+    font-family:"Font Awesome 5 Pro";
+    font-weight:900;
+    font-size:11px;
+    opacity:.35;
+    transition:.25s;
+}
+
+.megamenu-text a:hover{
+    background:#f0f4ff;
+    border-color:#d0d8f0;
+    transform:translateX(4px);
+    box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+
+.megamenu-text a:hover::after{
+    opacity:1;
+    transform:translateX(4px);
+    color:#4a7cf7;
+}
+
+
+/* ===========================
+   DARK MODE  –  mega menu
+=========================== */
+
+.dark .menu-item-has-children > .mega_menu{
+    background:#1e1e2e;
+    border-color:#333;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+}
+
+.dark .mega_image{
+    background:#1e1e2e;
+}
+
+.dark .mega_menu_text_description{
+    color:#aaa;
+}
+
+.dark .megamenu-text a{
+    background:#262636;
+    border-color:#333;
+    color:#ddd;
+}
+
+.dark .megamenu-text a:hover{
+    background:#2e2e42;
+    border-color:#4a7cf7;
+}
+
+
+@media (max-width:991px){
+
+    .mainmenu{
+        display:block;
+    }
+
+    .mainmenu > li > a{
+        justify-content:space-between;
+        height:auto;
+        padding:12px 16px;
+        font-size:15px;
+        border-bottom:1px solid rgba(0,0,0,.06);
+        border-radius:0;
+    }
+
+    .menu-item-has-children > a::after{
+        width:8px;
+        height:8px;
+        border-width:2px;
+        transition:.3s;
+    }
+
+    .menu-item-has-children.open > a::after{
+        transform:rotate(225deg);
+    }
+
+    .menu-item-has-children > .mega_menu{
+        position:static !important;
+        width:100% !important;
+        transform:none !important;
+        opacity:1 !important;
+        visibility:visible !important;
+        pointer-events:auto !important;
+        margin-top:0 !important;
+        display:none;
+        box-shadow:none !important;
+        border:none !important;
+        border-radius:0 !important;
+        padding:12px 16px !important;
+        background:#f8f9fa;
+    }
+
+    .menu-item-has-children.open > .mega_menu{
+        display:block;
+    }
+
+    .dark .menu-item-has-children > .mega_menu{
+        background:#1a1a2a;
+    }
+
+    /* Mobile megamenu UX optimizations */
+    .menu-item-has-children > .mega_menu > .row {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Move first column (image + description) to bottom */
+    .menu-item-has-children > .mega_menu > .row > div:first-child {
+        order: 2 !important;
+        margin-top: 15px;
+    }
+
+    /* Move second column (links) to top */
+    .menu-item-has-children > .mega_menu > .row > div:last-child {
+        order: 1 !important;
+    }
+
+    /* Hide large images inside megamenu on mobile to save space */
+    .menu-item-has-children > .mega_menu .mega_image img {
+        display: none !important;
+    }
+
+    /* Make description card compact on mobile */
+    .menu-item-has-children > .mega_menu .mega_image .card-body {
+        padding: 12px !important;
+    }
+
+    .menu-item-has-children > .mega_menu .mega_menu_text_description {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+    }
+
+    .mega_image{
+        margin-bottom:12px;
+    }
+}
+
+@media (min-width: 992px) {
+    nav .menu-item-has-children .mega_menu {
+        top: 100% !important;
+        left:50% !important;
+    }
+}
+
+    </style>
+
+        <style>
+        /* General text justification */
+        .title {
+            background: #ffb35f;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 10px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .title h2.dark-h2 {
+            color: #fff !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .title h2.dark-h2::after {
+            display: none;
+            /* remove underline when using colored background */
+        }
+
+        .text-justify * {
+            text-align: justify !important;
+            line-height: 1.7;
+        }
+
+        /* Main container */
+        .main-body {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        /* Dark mode */
+        .dark .main-body {
+            background: #2c2c2c;
+            color: #f1f1f1;
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.08);
+        }
+
+        .dark .dark-h2,
+        .dark .dark-text {
+            color: #f9f9f9;
+        }
+
+        /* Page title */
+        .dark-h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .dark-h2::after {
+            content: "";
+            display: block;
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, #007bff, #00c851);
+            margin: 10px auto 0;
+            border-radius: 3px;
+        }
+
+        /* Page content */
+        .dark-text {
+            font-size: 1.1rem;
+            color: #555;
+            justify-content: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dark .dark-text {
+            color: #dcdcdc;
+        }
+
+        /* Attachment button */
+        .attachment .btn {
+            background: linear-gradient(90deg, #007bff, #00c851);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+
+        .attachment .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Custom table styling */
+        table {
+            width: 100% !important;
+            border-collapse: separate;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 15px;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        table th {
+            background: #337ab7;
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        table td {
+            vertical-align: top;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .dark table th {
+            background: #337ab7;
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .dark table td {
+            background: #3b3b3b;
+            color: #f1f1f1;
+            border-color: #555;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <style>
+        /* Container tweaks */
+        .pollen-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .pollen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .last-updated {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .pollen-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .pollen-table th,
+        .pollen-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .pollen-total-row {
+            background: #f1f1f1;
+            font-weight: 700;
+        }
+
+        /* Badges */
+        .badge-pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            color: #fff;
+            white-space: nowrap;
+            width: auto;
+            max-width: 100%;
+        }
+
+        .badge-very-high {
+            background: #c82333;
+        }
+
+        /* red */
+        .badge-high {
+            background: #e0701a;
+        }
+
+        /* orange */
+        .badge-moderate {
+            background: #d39e00;
+        }
+
+        /* golden */
+        .badge-low {
+            background: #198754;
+        }
+
+        /* green */
+        .badge-absent {
+            background: #0dcaf0;
+        }
+
+        /* cyan */
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .pollen-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .chart-col {
+                width: 100% !important;
+            }
+
+            .table-col {
+                width: 100% !important;
+            }
+
+            .pollen-table th,
+            .pollen-table td {
+                padding: 10px 6px;
+                font-size: 14px;
+            }
+
+            .chart-wrapper {
+                margin-top: 18px;
+            }
+        }
+
+        /* Chart container */
+        .chart-card {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+
+<script type="text/javascript" class="flasher-js">(function() {    var rootScript = 'https://cdn.jsdelivr.net/npm/@flasher/flasher@1.3.2/dist/flasher.min.js';    var FLASHER_FLASH_BAG_PLACE_HOLDER = {};    var options = mergeOptions([], FLASHER_FLASH_BAG_PLACE_HOLDER);    function mergeOptions(first, second) {        return {            context: merge(first.context || {}, second.context || {}),            envelopes: merge(first.envelopes || [], second.envelopes || []),            options: merge(first.options || {}, second.options || {}),            scripts: merge(first.scripts || [], second.scripts || []),            styles: merge(first.styles || [], second.styles || []),        };    }    function merge(first, second) {        if (Array.isArray(first) && Array.isArray(second)) {            return first.concat(second).filter(function(item, index, array) {                return array.indexOf(item) === index;            });        }        return Object.assign({}, first, second);    }    function renderOptions(options) {        if(!window.hasOwnProperty('flasher')) {            console.error('Flasher is not loaded');            return;        }        requestAnimationFrame(function () {            window.flasher.render(options);        });    }    function render(options) {        if ('loading' !== document.readyState) {            renderOptions(options);            return;        }        document.addEventListener('DOMContentLoaded', function() {            renderOptions(options);        });    }    if (1 === document.querySelectorAll('script.flasher-js').length) {        document.addEventListener('flasher:render', function (event) {            render(event.detail);        });            }    if (window.hasOwnProperty('flasher') || !rootScript || document.querySelector('script[src="' + rootScript + '"]')) {        render(options);    } else {        var tag = document.createElement('script');        tag.setAttribute('src', rootScript);        tag.setAttribute('type', 'text/javascript');        tag.onload = function () {            render(options);        };        document.head.appendChild(tag);    }})();</script>
+</head>
+
+
+
+<body class="english-font-popins">
+
+    <div id="preloader">
+        <div class="preloader" style="opacity: 1; ">
+            <svg version="1.1" id="sun" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="10px"
+                viewBox="0 0 10 10" enable-background="new 0 0 10 10" xml:space="preserve"
+                style="opacity: 1; margin-left: 0px; margin-top: 0px;">
+                <g>
+                    <path fill="none"
+                        d="M6.942,3.876c-0.4-0.692-1.146-1.123-1.946-1.123c-0.392,0-0.779,0.104-1.121,0.301c-1.072,0.619-1.44,1.994-0.821,3.067C3.454,6.815,4.2,7.245,5,7.245c0.392,0,0.779-0.104,1.121-0.301C6.64,6.644,7.013,6.159,7.167,5.581C7.321,5,7.243,4.396,6.942,3.876z
+                        M6.88,5.505C6.745,6.007,6.423,6.427,5.973,6.688C5.676,6.858,5.34,6.948,5,6.948c-0.695,0-1.343-0.373-1.69-0.975C2.774,5.043,3.093,3.849,4.024,3.312C4.32,3.14,4.656,3.05,4.996,3.05c0.695,0,1.342,0.374,1.69,0.975C6.946,4.476,7.015,5,6.88,5.505z">
+                    </path>
+                    <path fill="none"
+                        d="M8.759,2.828C8.718,2.757,8.626,2.732,8.556,2.774L7.345,3.473c-0.07,0.041-0.094,0.132-0.053,0.202C7.319,3.723,7.368,3.75,7.419,3.75c0.025,0,0.053-0.007,0.074-0.02l1.211-0.699C8.774,2.989,8.8,2.899,8.759,2.828z">
+                    </path>
+                    <path fill="none"
+                        d="M1.238,7.171c0.027,0.047,0.077,0.074,0.128,0.074c0.025,0,0.051-0.008,0.074-0.02l1.211-0.699c0.071-0.041,0.095-0.133,0.054-0.203S2.574,6.228,2.503,6.269l-1.21,0.699C1.221,7.009,1.197,7.101,1.238,7.171z">
+                    </path>
+                    <path fill="none"
+                        d="M6.396,2.726c0.052,0,0.102-0.026,0.13-0.075l0.349-0.605C6.915,1.976,6.89,1.885,6.819,1.844c-0.07-0.042-0.162-0.017-0.202,0.054L6.269,2.503C6.228,2.574,6.251,2.666,6.322,2.706C6.346,2.719,6.371,2.726,6.396,2.726z">
+                    </path>
+                    <path fill="none"
+                        d="M3.472,7.347L3.123,7.952c-0.041,0.07-0.017,0.162,0.054,0.203C3.2,8.169,3.226,8.175,3.25,8.175c0.052,0,0.102-0.027,0.129-0.074l0.349-0.605c0.041-0.07,0.017-0.16-0.054-0.203C3.603,7.251,3.513,7.276,3.472,7.347z">
+                    </path>
+                    <path fill="none"
+                        d="M3.601,2.726c0.025,0,0.051-0.007,0.074-0.02C3.746,2.666,3.77,2.574,3.729,2.503l-0.35-0.604C3.338,1.828,3.248,1.804,3.177,1.844C3.106,1.886,3.082,1.976,3.123,2.047l0.35,0.604C3.5,2.7,3.549,2.726,3.601,2.726z">
+                    </path>
+                    <path fill="none"
+                        d="M6.321,7.292c-0.07,0.043-0.094,0.133-0.054,0.203l0.351,0.605c0.026,0.047,0.076,0.074,0.127,0.074c0.025,0,0.051-0.006,0.074-0.02c0.072-0.041,0.096-0.133,0.055-0.203l-0.35-0.605C6.483,7.276,6.393,7.253,6.321,7.292z">
+                    </path>
+                    <path fill="none"
+                        d="M2.202,5.146c0.082,0,0.149-0.065,0.149-0.147S2.284,4.851,2.202,4.851H1.503c-0.082,0-0.148,0.066-0.148,0.148s0.066,0.147,0.148,0.147H2.202z">
+                    </path>
+                    <path fill="none"
+                        d="M8.493,4.851H7.794c-0.082,0-0.148,0.066-0.148,0.148s0.066,0.147,0.148,0.147l0,0h0.699c0.082,0,0.148-0.065,0.148-0.147S8.575,4.851,8.493,4.851L8.493,4.851z">
+                    </path>
+                    <path fill="none"
+                        d="M5.146,2.203V0.805c0-0.082-0.066-0.148-0.148-0.148c-0.082,0-0.148,0.066-0.148,0.148v1.398c0,0.082,0.066,0.149,0.148,0.149C5.08,2.352,5.146,2.285,5.146,2.203z">
+                    </path>
+                    <path fill="none"
+                        d="M4.85,7.796v1.396c0,0.082,0.066,0.15,0.148,0.15c0.082,0,0.148-0.068,0.148-0.15V7.796c0-0.082-0.066-0.148-0.148-0.148C4.917,7.647,4.85,7.714,4.85,7.796z">
+                    </path>
+                    <path fill="none"
+                        d="M2.651,3.473L1.44,2.774C1.369,2.732,1.279,2.757,1.238,2.828C1.197,2.899,1.221,2.989,1.292,3.031l1.21,0.699c0.023,0.013,0.049,0.02,0.074,0.02c0.051,0,0.101-0.026,0.129-0.075C2.747,3.604,2.722,3.514,2.651,3.473z">
+                    </path>
+                    <path fill="none"
+                        d="M8.704,6.968L7.493,6.269c-0.07-0.041-0.162-0.016-0.201,0.055c-0.041,0.07-0.018,0.162,0.053,0.203l1.211,0.699c0.023,0.012,0.049,0.02,0.074,0.02c0.051,0,0.102-0.027,0.129-0.074C8.8,7.101,8.776,7.009,8.704,6.968z">
+                    </path>
+                </g>
+            </svg>
+
+            <svg version="1.1" id="cloud" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="10px"
+                viewBox="0 0 10 10" enable-background="new 0 0 10 10" xml:space="preserve">
+                <path fill="none"
+                    d="M8.528,5.624H8.247c-0.085,0-0.156-0.068-0.156-0.154c0-0.694-0.563-1.257-1.257-1.257c-0.098,0-0.197,0.013-0.3,0.038C6.493,4.259,6.45,4.252,6.415,4.229C6.38,4.208,6.356,4.172,6.348,4.131C6.117,3.032,5.135,2.235,4.01,2.235c-1.252,0-2.297,0.979-2.379,2.23c-0.004,0.056-0.039,0.108-0.093,0.13C1.076,4.793,0.776,5.249,0.776,5.752c0,0.693,0.564,1.257,1.257,1.257h6.495c0.383,0,0.695-0.31,0.695-0.692S8.911,5.624,8.528,5.624z">
+                </path>
+            </svg>
+
+            <div class="rain">
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+                <span class="drop"></span>
+            </div>
+
+        </div>
+    </div>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-266165434-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'UA-266165434-1');
+    </script>
+
+    <!-- Back To Top Start -->
+    <a href="#main-wrapper" id="backto-top" class="back-to-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+    <!-- Main Wrapper Start -->
+    <div id="main-wrapper" class="main-wrapper overflow-hidden">
+        <!-- Header Area Start -->
+        
+        <header class="header ">
+
+                        <div class="container py-2 header-top">
+                <style>
+                    /* @media (max-width:1024px) and (min-width:769px) {
+                        .header-top {
+                            height: 180px;
+                        }
+                    } */
+
+                    .header-top {
+                        min-height: 120px;
+                        align-content: center;
+                    }
+
+                    .header-logo {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+
+                    .header-actions {
+                        display: flex;
+                        justify-content: flex-end;
+                        align-items: center;
+                    }
+
+                    @media (max-width:767px) {
+                        .header-logo {
+                            justify-content: center;
+                            margin-bottom: 15px;
+                        }
+
+                        .header-actions {
+                            justify-content: center;
+                        }
+                    }
+                </style>
+
+                <div class="row align-items-center">
+
+                    <div class="col-lg-5 col-md-4 col-12">
+                        <div class="header-logo">
+                            <a href="https://weather.gov.pk">
+                                <img src="https://weather.gov.pk/front/assets/MainWebsite/web-logo.png" alt="Logo"
+                                    class="img-fluid light-logo" width="80" height="80">
+                            </a>
+                            <span>
+                                <span
+                                    style="font-weight:bold; color: black;">
+                                    Research &amp; Development
+                                </span>
+                                <span
+                                    style="color: green">Pakistan Meteorological Department
+                                </span>
+                            </span>
+
+                        </div>
+                    </div>
+
+                    <div
+                        class="col-lg-7 col-md-8 col-12 header-actions mt-2">
+                        <ul class="icon list-unstyled">
+    <li class="icon-li social-icon">
+        <a href="https://www.facebook.com/pmdgov.official" target="_blank"><i class="fab fa-facebook-f"></i></a>
+    </li>
+    <li class="icon-li social-icon">
+        <a href="https://x.com/pmdgov" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M9.49467 6.77491L15.323 0H13.9418L8.88114 5.88256L4.83917 0H0.177246L6.28949 8.89547L0.177246 16H1.55844L6.90267 9.78782L11.1713 16H15.8332L9.49433 6.77491H9.49467ZM7.60293 8.97384L6.98364 8.08805L2.0561 1.03974H4.17754L8.15411 6.72795L8.77341 7.61374L13.9425 15.0075H11.8211L7.60293 8.97418V8.97384Z"
+                    fill="black"></path>
+            </svg>
+        </a>
+    </li>
+    <li class="icon-li social-icon">
+        <a href="https://www.instagram.com/pmdgov/"><i class="fab fa-instagram" target="_blank"></i></a>
+    </li>
+    <li class="icon-li social-icon">
+        <a href="https://www.youtube.com/c/PMDweatherTV" target="_blank"><i class="fab fa-youtube"></i></a>
+    </li>
+    <li class="icon-li social-icon">
+        <a href="https://www.linkedin.com/company/pakistan-meteorological-department-official/" target="_blank"><i
+                class="fab fa-linkedin"></i></a>
+    </li>
+    <li class="icon-li social-icon">
+        <a href="https://www.tiktok.com/@pmd.gov" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="20" height="20"
+                fill="currentColor">
+                <path
+                    d="M448,209.9V150.7a146.1,146.1,0,0,1-80.8-24.2V128a79.4,79.4,0,0,1-48-14.6V319.9c0,86.2-69.8,156-156,156S8,406.1,8,319.9c0-80.2,61.3-146.2,140-155v72.7a79.4,79.4,0,0,0-32,154.6,79.4,79.4,0,0,0,104-74.2V0h72a145.6,145.6,0,0,0,80,136v73.9Z" />
+            </svg>
+        </a>
+    </li>
+
+    <li class="icon-li social-icon">
+        <a href="https://whatsapp.com/channel/0029VakyFbJHwXbKF7pjvl2H" target="_blank"><i
+                class="fab fa-whatsapp"></i></a>
+    </li>
+    <li>
+        <div class="wrapper switch">
+            <input type="checkbox" id="changeColor">
+            <label for="changeColor" class="toggle">
+                <span class="toggle-button">
+                    <span class="crater crater-1"></span>
+                    <span class="crater crater-2"></span>
+                    <span class="crater crater-3"></span>
+                    <span class="crater crater-4"></span>
+                    <span class="crater crater-5"></span>
+                    <span class="crater crater-6"></span>
+                    <span class="crater crater-7"></span>
+                </span>
+                <span class="star star-1"></span>
+                <span class="star star-2"></span>
+                <span class="star star-3"></span>
+                <span class="star star-4"></span>
+                <span class="star star-5"></span>
+                <span class="star star-6"></span>
+                <span class="star star-7"></span>
+                <span class="star star-8"></span>
+            </label>
+        </div>
+    </li>
+    <li>
+    <div class="lang-switch">
+        <a href="https://weather.gov.pk/lang?lang=en"
+            class="active">
+            EN
+        </a>
+
+        <a href="https://weather.gov.pk/lang?lang=ur"
+            class="">
+            اردو
+        </a>
+    </div>
+</li>
+    </ul>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div>
+                <div class="row">
+                    <div class="col-12">
+                                                    
+                            <style>
+    /* NAVBAR BACKGROUND */
+    .navbar-header {
+        background-color: #444;
+        border-bottom: 1px solid #333;
+    }
+
+    /* LEFT TAB (DATA PORTAL) */
+    .navbar-brand-tab {
+        background-color: #555;
+        color: #fff !important;
+        font-weight: bold;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        clip-path: polygon(0 0, 95% 0, 100% 50%, 95% 100%, 0 100%);
+    }
+
+    .navbar-brand-tab i {
+        margin-right: 8px;
+    }
+
+    /* MAIN MENU */
+    .navbar-nav.mainmenu {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 5px;
+        padding: 4px 0;
+    }
+
+    .nav-link {
+        color: #fff !important;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 10px 14px;
+        white-space: nowrap;
+        transition: background 0.2s ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+        background-color: #666;
+        border-radius: 4px;
+    }
+
+    /* Base dropdown menu hidden */
+    .dropdown-menu {
+        display: none !important;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .25s ease;
+        min-width: 200px;
+        border-radius: 4px;
+        padding: 5px 0;
+        left: auto !important;
+        top: auto;
+    }
+
+    /* When Bootstrap toggles .show (CLICK OPEN) */
+    .dropdown-menu.show {
+        display: block !important;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Hover dropdown on desktop */
+    @media (min-width: 992px) {
+        .nav-item.dropdown:hover > .dropdown-menu {
+            display: block !important;
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    .dropdown-item {
+        font-size: 14px;
+        padding: 6px 16px;
+    }
+
+    .dropdown-item:hover {
+        background-color: #555;
+        color: #fff;
+    }
+
+    /* SUBMENU */
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    .dropdown-menu-child {
+        display: none;
+        opacity: 0;
+        visibility: hidden;
+        position: absolute;
+        top: 0;
+        left: 100%;
+        min-width: 200px;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: opacity .25s ease;
+    }
+
+    /* SHOW SUBMENU */
+    .dropdown-menu-child.show {
+        display: block;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Hover for submenu (desktop only) */
+    @media (min-width: 992px) {
+        .dropdown-submenu:hover > .dropdown-menu-child {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+</style>
+
+
+<header class="header navbar-header" style="padding: 8px 50px 8px 8px;">
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+
+            <!-- Toggler -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu Items -->
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav mainmenu">
+
+                                                                        <li class="nav-item">
+                                <a class="nav-link "
+                                    href="https://weather.gov.pk/rnd">
+                                    Home
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu1" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    About Us
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/addressBook">
+                                                    Our team
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/gallery">
+                                                    Gallery
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu2" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    NWP Forecasts
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/numerical-weather-product">
+                                                    Operational Forecasts
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu3" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Long Range Forecasts
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu3">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/50/weekly-forecast">
+                                                    Weekly forecast
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/64/seasonal-forecast">
+                                                    Seasonal Forecast
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu4" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Pollen Monitoring
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu4">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/44/about-pollen">
+                                                    About pollen
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item active"
+                                                    href="https://weather.gov.pk/rnd/pollen-data">
+                                                    Pollen Data
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/80/pollen-reports">
+                                                    Pollen Reports
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/83/pollen-indexes">
+                                                    Pollen Indexes
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/81/pollen-graphs">
+                                                    Pollen Graphs
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/gallery/pollen-monitoring">
+                                                    Pollen Gallery
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/82/pollen-faqs">
+                                                    FAQs
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/45/contact-pollen-monitoring">
+                                                    Contact pollen Monitoring
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu5" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Journal
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu5">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/journals/index">
+                                                    Pakistan Journal of Meteorology
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/73/Editorial-Board">
+                                                    Editorial Board
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/journals">
+                                                    Journal Volume
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/88/Reviewer-guidelines">
+                                                    Reviewer Guidelines
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/89/PJM-Scope-and-Standards">
+                                                    PJM Scope and Standards
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/86/Author-Guidelines">
+                                                    Author Guidelines for Submission
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/87/How-to-submit">
+                                                    How to submit
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/85/Contact-Us">
+                                                    Contact Us
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle "
+                                    href="#" id="dropdownMenu6" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Glacier Monitoring
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu6">
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/46/about-glacier-monitoring-unit">
+                                                    About Glacier Monitoring Unit
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="http://115.186.56.86:9000/glof-ews/public">
+                                                    Glof EWS
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/glof/advirosy&amp;alerts">
+                                                    Glof Alerts
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/gallery/glacier-observation">
+                                                    Gallery
+                                                </a>
+                                            </li>
+                                        
+                                    
+                                                                                    <li>
+                                                <a class="dropdown-item "
+                                                    href="https://weather.gov.pk/rnd/page/47/contact-glacier-monitoring">
+                                                    Contact Glacier Monitoring
+                                                </a>
+                                            </li>
+                                        
+                                                                    </ul>
+
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="https://www.ozonewatch.com/">
+                                    Ozone Watch
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="http://35.72.160.96:8001/#/index">
+                                    Lightening Monitoring &amp; Warning System
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="http://115.186.56.181/aegis">
+                                    PMD EWS- Aegis
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="https://115.186.56.181:12304/monitor">
+                                    Cloud EWS
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="https://weather.gov.pk/rnd/subscribe">
+                                    Subscribe with Us
+                                </a>
+                            </li>
+                                                                                                <li class="nav-item">
+                                <a class="nav-link "
+                                    href="https://weather.gov.pk/rnd/contactus">
+                                    Contact us
+                                </a>
+                            </li>
+                                            
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+<script>
+document.querySelectorAll(".dropdown-submenu > a").forEach(function(el) {
+    el.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let submenu = this.nextElementSibling;
+
+        // Close other open submenus inside same dropdown
+        this.closest(".dropdown-menu")
+            .querySelectorAll(".dropdown-menu-child.show")
+            .forEach(s => s.classList.remove("show"));
+
+        submenu.classList.toggle("show");
+    });
+});
+</script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+                                            </div>
+                </div>
+            </div>
+        </header>
+
+
+
+
+        <style>
+    .ticker_heading {
+        padding-right: 25px;
+        /* border-top-left-radius: 0;
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0; */
+    }
+
+    /* .ticker_div {
+        background-color: #ffff;
+    } */
+
+
+    /* .dark .modal .modal-dialog, */
+    .dark .modal-content,
+    .dark .modal-body,
+    .dark .modal .modal-dialog .modal-body,
+    .dark .modal .list-group-item {
+        background: #252222 !important;
+        color: white !important;
+    }
+
+    .dark .modal .btn-close {
+        background: #ffff !important;
+    }
+</style>
+
+
+    <div class="container-fluid ticker_div">
+        <div class="ticker_heading gap-0">
+            <h4>Latest Update</h4>
+            
+        </div>
+
+        <div class="ticker">
+            <marquee onmouseover="this.stop();" onmouseout="this.start();" style="padding:10px 0;"
+                direction="left">
+                <div class="ticker_content">
+                                            <a href="https://weather.gov.pk/rnd/page/241/ticker"
+                            style="text-decoration:none;">
+                            <span class="">
+                                <i class="fas fa-arrow-circle-right" style="color:#FFAD51"></i>
+                                <span class="fw-700 mx-1 marquee-title" style="font-size:16px;font-weight:700;">
+                                    Monthly Outlook September 2026
+                                </span>
+                            </span>
+                        </a>
+                                            <a href="https://weather.gov.pk/rnd/page/240/ticker"
+                            style="text-decoration:none;">
+                            <span class="">
+                                <i class="fas fa-arrow-circle-right" style="color:#FFAD51"></i>
+                                <span class="fw-700 mx-1 marquee-title" style="font-size:16px;font-weight:700;">
+                                    Seasonal Outlook SON 2026
+                                </span>
+                            </span>
+                        </a>
+                                    </div>
+            </marquee>
+        </div>
+    </div>
+
+
+
+            <div class="container pollen-container mt-4 mb-5">
+
+        <div class="pollen-header">
+            <div class="title text-center w-100">
+                <h2 class="dark-h2 fw-5 fs-40 lh-120 ls-5">
+                    Islamabad Pollen Count <small class="text-muted">(Last 24 Hours)</small>
+                </h2>
+            </div>
+            <div>
+                
+            </div>
+
+            <div class="text-end">
+                <div class="last-updated" id="lastUpdated">Last Updated: September 4, 2026</div>
+            </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+            <div class="col-md-7 table-col">
+                <div class="card mb-3">
+                    <div class="card-body table-responsive">
+                        
+                        <div id="pollenTableWrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5 chart-col">
+                <div class="chart-card">
+                    <canvas id="pollenChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pollen Index Legend -->
+        <div class="mt-4">
+            <h4>Pollen Index</h4>
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="card p-3">
+                        <div class="d-flex gap-3 flex-column">
+                            <div class="d-flex gap-2 align-items-start">
+                                <h6 class="badge-pill badge-very-high">Very High</h6>
+                                <p> — Almost all individuals with any sensitivity at all to these pollens and molds will
+                                    experience symptoms. Extremely sensitive people could have severe symptoms.</p>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-start">
+                                <h6 class="badge-pill badge-high">High</h6>
+                                <p> — Most individuals with any sensitivity to these pollens and molds will experience
+                                    symptoms..</p>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-start">
+                                <h6 class="badge-pill badge-moderate">Moderate</h6>
+                                <p> — Many individuals sensitive to these pollens and molds will experience symptoms.</p>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-start">
+                                <h6 class="badge-pill badge-low">Low</h6>
+                                <p> — Only individuals sensitive to these pollens and molds will experience symptoms.</p>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-start">
+                                <h6 class="badge-pill badge-absent">Absent</h6>
+                                <p> — No symptoms.</p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+        <!-- Footer area Start -->
+<footer class="footer pt-100 pb-0 mt-4" style="background-color: #222; color: #fff;">
+    <div class="container  ">
+        <div class="row">
+                        <div class="col-md-2">
+                <div class="contact-details" style="color: #fff;">
+                    <h5 class="text-3 mb-3" style="color: #fff;">About us</h5>
+                    <ul class="list list-icons list-icons-lg">
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right "
+                                style="color: #FFAD51;"></i>
+                            <a href="#" class="link-hover-style-1 ml-1"
+                                style="color: #fff;">About us</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right "
+                                style="color: #FFAD51;"></i>
+                            <a href="##tender"
+                                    target="_blank"
+                                    class="link-hover-style-1 ml-1"
+                                    style="color: #fff;">
+                                        Tenders
+                                    </a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right "
+                                style="color: #FFAD51;"></i>
+                            <a href="##circular"
+                                    target="_blank"
+                                    class="link-hover-style-1 ml-1"
+                                    style="color: #fff;">
+                                        Circulars
+                                    </a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right "
+                                style="color: #FFAD51;"></i>
+                            <a href="#" target="_blank"
+                                class="link-hover-style-1 ml-1"
+                                style="color: #fff;">Seniority Lists</a>
+                        </li>
+                                                <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://weather.gov.pk/rnd/addressBook/Pollen-Monitoring" class="link-hover-style-1 ml-1"
+                                style="color: #fff;">Address Book</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://weather.gov.pk/faqs/rnd" class="link-hover-style-1 ml-1"
+                                style="color: #fff;">FAQs</a>
+                        </li>
+
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://weather.gov.pk/rnd/gallery/Pollen-Monitoring" class="link-hover-style-1 ml-1"
+                                style="color: #fff;">Gallery</a>
+                        </li>
+                        
+                        
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://webmail.pmd.gov.pk/Mondo/lang/sys/login.aspx" target="_blank"
+                                class="link-hover-style-1 ml-1" style="color: #fff;">PMD Mail</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="contact-details" style="color: #fff;">
+                    <h5 class="text-3 mb-3" style="color: #fff;">Important Pages</h5>
+                    
+                    <ul class="list list-icons list-icons-lg">
+                                                                    </ul>
+
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="contact-details" style="color: #fff;">
+                    <h5 class="text-3 mb-3" style="color: #fff;">Contact us</h5>
+                    <ul class="list list-icons list-icons-lg">
+                        <li class="mb-1">
+                            <i class="far fa-dot-circle" style="color: #FFAD51;"></i>
+                                                        <a href="https://weather.gov.pk/rnd/contactus/Pollen-Monitoring" class="link-hover-style-1 ml-1"
+                                style="color: #fff;">Feedback / Suggestions /
+                                Contact Us</a>
+                        </li>
+                                                                                                                        
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="contact-details" style="color: #fff;">
+                    <h5 class="text-3 mb-3" style="color: #fff;">Social Media</h5>
+                    <ul class="list list-icons list-icons-lg">
+                                                                                                                    </ul>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="contact-details" style="color: #fff;">
+                    <h5 class="text-3 mb-3" style="color: #fff;">Useful Links</h5>
+                    <ul class="list list-icons list-icons-lg">
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://www.mod.gov.pk/" class="link-hover-style-1 ml-1" title=""
+                                style="color: #fff;">Ministry Of Defence</a>
+                        </li>
+                        
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://caapakistan.com.pk/" class="link-hover-style-1 ml-1" title=""
+                                style="color: #fff;">Pakistan Civil Aviation Authority (CAA)</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://www.piac.com.pk/" class="link-hover-style-1 ml-1" title=""
+                                style="color: #fff;">PIA</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://wmo.int/" class="link-hover-style-1 ml-1" title=""
+                                style="color: #fff;">WMO</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="https://web.citizenportal.gov.pk/" class="link-hover-style-1 ml-1"
+                                title="" style="color: #fff;">Citizen Portal</a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas  fa-angle-right ""
+                                style="color: #FFAD51;"></i>
+                            <a href="http://www.sifc.gov.pk/" class="link-hover-style-1 ml-1" title=""
+                                style="color: #fff;">Special Investment Facilitation Council (SIFC)</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <p class="fw-4 fs-13 color-dark-2 copyright m-0 text-center" style="color: #fff;">
+            ©2026 PMD, All Rights Reserved.
+            <a href="https://css.net.pk" class="bold" target="_blank" style="color: #FFAD51;"> COMSATS Software
+                Solutions</a>
+        </p>
+    </div>
+</footer>
+<!-- Footer area End -->
+<script src="https://weather.gov.pk/newtemplate/assets/js/vendor/jquery-3.6.3.min.js"></script>
+<script src="https://weather.gov.pk/newtemplate/assets/js/vendor/bootstrap.min.js"></script>
+<script src="https://weather.gov.pk/newtemplate/assets/js/vendor/slick.min.js"></script>
+<script src="https://weather.gov.pk/newtemplate/assets/js/vendor/jquery-appear.js"></script>
+
+<script src="https://weather.gov.pk/newtemplate/assets/js/vendor/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://weather.gov.pk/newtemplate/assets/js/app.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.1.0/mdb.umd.min.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // ── Config ──────────────────────────────────────────────
+        const ALL_COLS = ['H-8', 'E-8', 'G-6', 'F-10'];
+        const COL_KEYS = {
+            'H-8': 'H-8',
+            'E-8': 'E-8',
+            'G-6': 'G-6',
+            'F-10': 'F-10'
+        };
+        const COL_COLORS = {
+            'H-8': '#337ab7',
+            'E-8': '#e0701a',
+            'G-6': '#198754',
+            'F-10': '#d39e00'
+        };
+
+        // ── Helpers ─────────────────────────────────────────────
+        function badgeClassForCategory(cat) {
+            cat = (cat || '').toLowerCase().trim();
+            if (cat === 'very high') return 'badge-very-high';
+            if (cat === 'high') return 'badge-high';
+            if (cat === 'moderate') return 'badge-moderate';
+            if (cat === 'low') return 'badge-low';
+            return 'badge-absent';
+        }
+
+        /** Return only the column keys that have at least one non-zero/non-null value */
+        function getVisibleCols(rows) {
+            return ALL_COLS.filter(col => {
+                return rows.some(r => {
+                    const v = parseInt(r[col] || 0, 10);
+                    return v !== 0;
+                });
+            });
+        }
+
+        // ── Initial data (server-rendered) ──────────────────────
+        const initialRows = (function() {
+            const rows = [];
+                            rows.push({
+                    type: "Acacia",
+                    'H-8': "00",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Absent"
+                });
+                            rows.push({
+                    type: "Alternaria",
+                    'H-8': "21",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Low"
+                });
+                            rows.push({
+                    type: "Cannabis",
+                    'H-8': "36",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Moderate"
+                });
+                            rows.push({
+                    type: "Dandelion",
+                    'H-8': "00",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Absent"
+                });
+                            rows.push({
+                    type: "Eucalyptus",
+                    'H-8': "00",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Absent"
+                });
+                            rows.push({
+                    type: "Grasses",
+                    'H-8': "12",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Moderate"
+                });
+                            rows.push({
+                    type: "Paper Mulberry",
+                    'H-8': "07",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Low"
+                });
+                            rows.push({
+                    type: "Pines",
+                    'H-8': "00",
+                    'E-8': null,
+                    'G-6': null,
+                    'F-10': null,
+                    category: "Absent"
+                });
+                        return rows;
+        })();
+
+        // ── Build / Rebuild the table ───────────────────────────
+        function buildTable(rows) {
+            const wrap = document.getElementById('pollenTableWrap');
+            const visibleCols = getVisibleCols(rows);
+
+            let html = '<table class="pollen-table w-100"><thead><tr>';
+            html += '<th>Type</th>';
+
+            visibleCols.forEach(c => {
+                html += `<th style="text-align:center;">${c}</th>`;
+            });
+
+            html += '<th>Category</th>';
+            html += '</tr></thead><tbody>';
+
+            // Initialize totals
+            const totals = {};
+            visibleCols.forEach(c => {
+                totals[c] = 0;
+            });
+
+            // Loop through rows
+            rows.forEach(r => {
+                html += '<tr>';
+                html += `<td>${r.type}</td>`;
+
+                visibleCols.forEach(c => {
+                    const rawValue = r[c];
+
+                    // numeric conversion only for totals/chart logic
+                    const numericValue =
+                        rawValue !== null && rawValue !== '' ?
+                        parseInt(rawValue, 10) :
+                        0;
+
+                    totals[c] += numericValue;
+
+                    // show original string in table
+                    html += `
+                <td style="text-align:center;">
+                    ${rawValue != null ? rawValue : '-'}
+                </td>
+            `;
+                });
+
+                const cat = r.category || '';
+                const badge = badgeClassForCategory(cat);
+                const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+
+                html += `
+            <td>
+                <span class="badge-pill ${badge}">
+                    ${label}
+                </span>
+            </td>
+        `;
+
+                html += '</tr>';
+            });
+
+            // Total row
+            html += '<tr class="pollen-total-row">';
+            html += '<td>TOTAL</td>';
+
+            visibleCols.forEach(c => {
+                html += `<td style="text-align:center;">${totals[c]}</td>`;
+            });
+
+            html += '<td></td>';
+            html += '</tr>';
+
+            html += '</tbody></table>';
+
+            wrap.innerHTML = html;
+
+            return visibleCols;
+        }
+
+        // ── Chart ───────────────────────────────────────────────
+        let ctx = document.getElementById('pollenChart').getContext('2d');
+        let pollenChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: false
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+
+        function updateChart(rows, visibleCols) {
+            const labels = rows.map(r => r.type);
+
+            const datasets = visibleCols.map(col => ({
+                label: col,
+                data: rows.map(r => parseInt(r[col] || 0, 10)),
+                backgroundColor: COL_COLORS[col]
+            }));
+
+            pollenChart.data.labels = labels;
+            pollenChart.data.datasets = datasets;
+            pollenChart.update();
+        }
+
+        // ── Render everything (table + chart) ───────────────────
+        function renderAll(rows, lastUpdated) {
+            const visibleCols = buildTable(rows);
+            updateChart(rows, visibleCols);
+            if (lastUpdated) {
+                document.getElementById('lastUpdated').textContent = 'Last Updated: ' + lastUpdated;
+            }
+        }
+
+        // ── Initial render on page load ─────────────────────────
+        renderAll(initialRows, null);
+
+        // ── AJAX month switch ───────────────────────────────────
+        document.getElementById('monthSelect').addEventListener('change', function() {
+            const m = this.value;
+            if (!m) return;
+            fetch(`https://weather.gov.pk/rnd/pollen-data/ajax-data?month=${encodeURIComponent(m)}`)
+                .then(r => {
+                    if (!r.ok) throw new Error('Network response not ok');
+                    return r.json();
+                })
+                .then(payload => {
+                    // Normalize rows — AJAX returns rows with the column keys
+                    renderAll(payload.rows, payload.lastUpdated);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Failed to load data for selected month');
+                });
+        });
+
+        // ── Responsive chart height ─────────────────────────────
+        (function resizeChart() {
+            const chartCard = document.querySelector('.chart-card');
+            if (!chartCard) return;
+            const rect = chartCard.getBoundingClientRect();
+            const canvas = document.getElementById('pollenChart');
+            canvas.style.height = Math.max(240, rect.width * 0.6) + 'px';
+            pollenChart.resize();
+        })();
+
+        window.addEventListener('resize', () => {
+            pollenChart.resize();
+        });
+    </script>
+</body>
+
+</html>

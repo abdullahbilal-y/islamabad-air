@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hawa — Islamabad Pollen &amp; Air Quality</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfaf7;
+    --panel: #ffffff;
+    --ink: #1b1a17;
+    --muted: #6b675e;
+    --line: #e5e1d8;
+    --accent: #2f6f4f;
+    --absent: #9aa39c;
+    --low: #4a9d6b;
+    --moderate: #d7a13b;
+    --high: #d9713c;
+    --very_high: #b6373a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171a;
+      --panel: #1e2024;
+      --ink: #eceae5;
+      --muted: #9a978f;
+      --line: #2e3138;
+      --accent: #6cc394;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 64px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 28px; }
+  h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0; font-size: 14px; }
+  .meta { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card h2 { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--muted);
+             text-transform: uppercase; letter-spacing: 0.06em; }
+  .total { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin: 4px 0 2px; }
+  .unit { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .band {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; color: #fff; margin-top: 6px;
+  }
+  .band.absent { background: var(--absent); }
+  .band.low { background: var(--low); }
+  .band.moderate { background: var(--moderate); }
+  .band.high { background: var(--high); }
+  .band.very_high { background: var(--very_high); }
+  .peak { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  section { margin-top: 36px; }
+  section > h2 { font-size: 15px; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.05em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .empty {
+    background: var(--panel); border: 1px dashed var(--line); border-radius: 10px;
+    padding: 24px; color: var(--muted);
+  }
+  code { background: rgba(127,127,127,0.14); padding: 1px 6px; border-radius: 4px;
+         font-size: 13px; }
+  footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
+           font-size: 13px; color: var(--muted); }
+  a { color: var(--accent); }
+  .warn { color: var(--high); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Hawa — Islamabad pollen &amp; air quality</h1>
+    <p class="sub">
+      Daily sector-wise pollen counts from the Pakistan Meteorological Department,
+      made queryable. Independent open-source project — not an official PMD service.
+    </p>
+    <p class="meta">
+      API docs: <a href="/docs">/docs</a> &middot;
+      Health: <a href="/healthz">/healthz</a> &middot;
+      Sources: <a href="/v1/sources">/v1/sources</a>
+      <span id="asof"></span>
+    </p>
+  </header>
+
+  {% if not has_data %}
+  <div class="empty">
+    <strong>No data yet.</strong>
+    Run <code>hawa ingest</code> to fetch the current PMD page, or wait for the
+    scheduler's first poll. Sectors configured: {{ sectors | join(", ") }}.
+  </div>
+  {% endif %}
+
+  <div class="cards" id="cards"></div>
+
+  <section id="detail-section" hidden>
+    <h2>Every pollen type, by sector</h2>
+    <div class="scroll"><table id="detail">
+      <thead><tr><th>Pollen type</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="meta">
+      Counts are grains per cubic metre over 24 hours. A blank cell means that
+      sector's trap reported nothing for that type — it is not a zero.
+    </p>
+  </section>
+
+  <footer id="attribution"></footer>
+</div>
+
+<script>
+const BANDS = ["absent", "low", "moderate", "high", "very_high"];
+const fmt = new Intl.NumberFormat("en-US");
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function renderCards(day) {
+  const host = document.getElementById("cards");
+  host.replaceChildren();
+  if (!day.sectors.length) return;
+
+  for (const s of day.sectors) {
+    const card = el("div", "card");
+    card.append(el("h2", null, s.sector));
+    const total = el("div", "total", fmt.format(s.total));
+    total.append(el("span", "unit", " grains/m³"));
+    card.append(total);
+    const band = BANDS.includes(s.band) ? s.band : "absent";
+    card.append(el("span", "band " + band, band.replace("_", " ")));
+    if (s.top_type) {
+      card.append(el("div", "peak", `Highest: ${s.top_type} — ${fmt.format(s.top_value)}`));
+    }
+    card.append(el("div", "peak", `${s.types_reported} type(s) reported`));
+    host.append(card);
+  }
+}
+
+function renderTable(day) {
+  const sectors = day.sectors.map(s => s.sector);
+  if (!sectors.length) return;
+
+  const table = document.getElementById("detail");
+  const head = table.querySelector("thead tr");
+  head.replaceChildren(el("th", null, "Pollen type"));
+  for (const s of sectors) head.append(el("th", null, s));
+
+  // Group readings by type so each row is one pollen type across all sectors.
+  const byType = new Map();
+  for (const r of day.readings) {
+    if (!byType.has(r.pollen_type)) byType.set(r.pollen_type, new Map());
+    byType.get(r.pollen_type).set(r.sector, r);
+  }
+
+  const body = table.querySelector("tbody");
+  body.replaceChildren();
+  for (const [type, bySector] of [...byType].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const tr = el("tr");
+    tr.append(el("td", null, type));
+    for (const sector of sectors) {
+      const reading = bySector.get(sector);
+      const td = el("td", "num");
+      if (!reading) {
+        td.textContent = "";
+      } else if (reading.value === null) {
+        // Show exactly what the source printed rather than a guessed number.
+        td.append(el("span", "warn", reading.value_raw ?? "?"));
+        td.title = "Could not be parsed as a number; showing the raw value.";
+      } else {
+        td.textContent = fmt.format(reading.value);
+      }
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+  document.getElementById("detail-section").hidden = false;
+}
+
+fetch("/v1/pollen/latest")
+  .then(r => (r.ok ? r.json() : Promise.reject(new Error("no data yet"))))
+  .then(day => {
+    document.getElementById("asof").textContent = " · reading for " + day.observed_date;
+    document.getElementById("attribution").textContent = day.attribution;
+    renderCards(day);
+    renderTable(day);
+  })
+  .catch(() => {
+    document.getElementById("attribution").textContent =
+      "No readings loaded. See /healthz for why.";
+  });
+</script>
+</body>
+</html>
