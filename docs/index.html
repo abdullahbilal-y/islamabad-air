@@ -56,6 +56,20 @@
   .warn { color:var(--high); font-size:12px; }
   .stale { background:#d9713c; color:#fff; padding:2px 8px; border-radius:999px;
            font-size:12px; font-weight:600; }
+  /* The freshness notice. Always shown, not only when the data is old: the
+     mechanism is unusual enough that a reader who does not know about it would
+     reasonably assume a number on screen is current. */
+  .freshness { border:1px solid var(--line); background:var(--panel);
+               border-radius:10px; padding:14px 16px; margin-bottom:22px;
+               font-size:13.5px; line-height:1.5; color:var(--muted); }
+  .freshness strong { color:var(--ink); }
+  .freshness .age { display:block; margin-top:6px; font-size:13px; }
+  /* Escalates when the reading really is old, so the notice is not wallpaper. */
+  .freshness.is-stale { border-color:var(--high); border-left-width:4px;
+                        background:color-mix(in srgb, var(--high) 8%, var(--panel)); }
+  .freshness.is-stale strong { color:var(--high); }
+  .refresh-state { font-style:italic; }
+
   /* A sector whose trap sent nothing. Visibly present but visibly empty --
      omitting it entirely reads as a bug in this site. */
   .card.silent { border-style:dashed; opacity:.72; }
@@ -79,6 +93,16 @@
       <a href="https://github.com/abdullahbilal-y/islamabad-air">source</a>
     </p>
   </header>
+
+  <div class="freshness" id="freshness">
+    <strong>This page updates only when someone in Pakistan opens it.</strong>
+    PMD refuses requests from outside Pakistan, so no server anywhere can collect
+    these numbers on a schedule. Opening this page from a Pakistani connection is
+    what fetches the latest reading — including the visit you are making now.
+    If nobody looks for a while, the figures below get old, and there is no way to
+    recover the missed days afterwards because PMD keeps no archive.
+    <span class="age" id="freshness-age"></span>
+  </div>
 
   <div class="cards" id="cards"></div>
   <div id="fallback"></div>
@@ -107,14 +131,15 @@ curl https://abdullahbilal-y.github.io/islamabad-air/data/pollen.csv</code></pre
   <section>
     <h2>How this stays up to date</h2>
     <p class="sub">
-      PMD serves requests from Pakistan and refuses them from everywhere else, so
-      no cloud server can collect this data — we measured that across five
-      networks. Instead, opening this page from Pakistan asks a Cloudflare Worker
-      in Islamabad to refresh its cached copy of PMD, and CI picks that copy up a
-      few times a day. So the archive keeps growing as long as someone here looks
-      at it occasionally. If the reading above is old, that is why, and the badge
-      next to the date says so rather than letting a stale number pass as
-      current.
+      We measured this across five networks: an Islamabad home connection and a
+      Cloudflare Worker in the Islamabad colo both get through; a Worker in
+      Frankfurt, GitHub Actions, and a US service network all get HTTP 403. So
+      the fetch has to happen inside Pakistan, and only the fetch does.
+      Opening this page asks a Cloudflare Worker — which runs at the edge nearest
+      you, so in Islamabad for a Pakistani visitor — to refresh its cached copy of
+      PMD. Automated CI then collects that copy a few times a day, parses it and
+      publishes the result here. That is why a visit matters and why a quiet week
+      leaves a gap.
     </p>
   </section>
 
@@ -229,6 +254,22 @@ function daysOld(iso) {
 // hours, callers outside Pakistan are declined harmlessly, and nothing on this
 // page depends on the outcome. The data below renders either way.
 fetch("https://hawa-pmd-relay.abdullahbilal-y.workers.dev/refresh", { mode: "cors" })
+  .then((r) => r.json())
+  .then((res) => {
+    const el = document.getElementById("refresh-state");
+    if (!el) return;
+    if (res.refreshed) {
+      el.textContent = "Your visit just fetched a fresh copy from PMD — thank you.";
+    } else if (res.reason === "caller-outside-pakistan") {
+      el.textContent =
+        "You appear to be outside Pakistan, so this visit could not refresh it. " +
+        "Someone in Pakistan opening this page will.";
+    } else if (res.reason === "rate-limited") {
+      el.textContent = "Already refreshed recently, so this visit did not re-fetch.";
+    } else {
+      el.textContent = "Could not refresh from PMD on this visit.";
+    }
+  })
   .catch(() => {});
 
 fetch("data/latest.json", { cache: "no-cache" })
@@ -237,6 +278,15 @@ fetch("data/latest.json", { cache: "no-cache" })
     const age = daysOld(day.observed_date);
     const asof = document.getElementById("asof");
     asof.textContent = `Reading for ${day.observed_date} · `;
+
+    const box = document.getElementById("freshness");
+    const ageLine = document.getElementById("freshness-age");
+    const when =
+      age <= 0 ? "today" : age === 1 ? "yesterday" : `${age} days ago`;
+    ageLine.innerHTML =
+      `Newest reading is from <strong>${day.observed_date}</strong> (${when}). ` +
+      `<span class="refresh-state" id="refresh-state"></span>`;
+    if (age > 2) box.classList.add("is-stale");
     // The ingest runs on somebody's machine, so gaps are a normal failure mode.
     // Say so on the page rather than letting a stale number look current.
     if (age > 2) {

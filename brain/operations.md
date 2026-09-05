@@ -78,3 +78,31 @@ Any single container. Run `hawa serve --host 0.0.0.0`. The scheduler runs
 in-process, so **run exactly one instance** unless you set
 `HAWA_ENABLE_SCHEDULER=false` on all but one. Concurrent ingest is safe (the
 writes are idempotent) but it is pointless load on PMD.
+
+## Free-tier limits this runs inside
+
+Everything here is on free tiers. The headroom is large, but two limits are real
+and one of them can silently stop collection.
+
+| Service | Limit | What we use |
+|---|---|---|
+| GitHub Actions | **Unlimited minutes on public repos** (private: 2,000 min/month) | ~1 min × 3 runs/day |
+| GitHub Pages | 1 GB site, 100 GB/month bandwidth, 10 builds/hour (soft) | ~1 MB/year of data; ≤3 builds/day |
+| Cloudflare Workers | 100,000 requests/day | a few per visitor + 3 CI pulls/day |
+| Cloudflare KV | 100,000 reads/day, **1,000 writes/day**, 1 GB | ≤8 refreshes/day × 2 writes |
+
+**The one that can bite: GitHub disables scheduled workflows in a public repo
+after 60 days with no repository activity.** It emails first, and any commit
+resets the clock — the collect job commits whenever there is new data, so in
+normal operation this never triggers. It becomes a risk exactly when nobody
+visits the dashboard for two months, at which point collection stops *and stays
+stopped* even after visits resume. If the repo has been quiet, push anything, or
+re-enable the workflow from the Actions tab.
+
+Also worth knowing: scheduled workflows are best-effort. GitHub delays them under
+load, so a `cron` at 04:30 may run at 04:50. Nothing here depends on precise
+timing.
+
+**KV writes are the tightest ceiling** (1,000/day) and the reason `/refresh`
+returns early without writing when it is rate-limited. If you ever remove that
+early return, a busy day of visitors could exhaust the quota.
