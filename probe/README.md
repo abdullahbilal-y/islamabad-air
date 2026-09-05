@@ -18,9 +18,17 @@ variable and the network is.
 | GitHub Actions (Azure, `eastus`) | **403**, all three UAs | 2026-09-05 |
 | Vercel Functions (AWS Lambda) | not yet measured | — |
 | Netlify Functions (AWS Lambda) | not yet measured | — |
+| Cloudflare Workers (CF edge) | not yet measured | — |
 
 Both Vercel and Netlify run functions on AWS Lambda, so the expectation is 403 —
 but that is an inference, and inference is what these probes exist to replace.
+
+**Try Cloudflare first.** Vercel and Netlify are two tests of nearly the same
+question, since both are AWS Lambda underneath. Cloudflare Workers run on a
+different network entirely, from a POP near the caller rather than us-east-1, so
+it is the one with a genuinely different chance of succeeding. It is also the
+fastest to deploy.
+
 **If you run one, please open a PR updating this table.** It is genuinely useful
 to the next person.
 
@@ -51,6 +59,17 @@ netlify deploy --prod
 Then open `https://<your-site>.netlify.app/.netlify/functions/probe`.
 
 Or via the dashboard: import the repo, set **Base directory** to `probe/netlify`.
+
+## Cloudflare Workers
+
+Free tier, no card required.
+
+```bash
+cd probe/cloudflare
+npx wrangler deploy
+```
+
+Then open the `*.workers.dev` URL it prints.
 
 ## GitHub Actions
 
