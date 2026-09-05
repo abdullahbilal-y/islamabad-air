@@ -280,3 +280,105 @@ fetch("data/index.json", { cache: "no-cache" })
     const host = document.getElementById("history-body");
     if (host) host.append(node("div", "note", "History is not available yet."));
   });
+
+// ---------------------------------------------------------------------------
+// Today's reading as a ranked bar chart.
+//
+// This works from a single day, so the page has something real to show from the
+// first reading rather than waiting for the history to build. It answers the
+// question the table above cannot answer at a glance: which allergen is actually
+// driving today's count.
+//
+// One hue, not a ramp. Bar length already encodes magnitude; colouring by
+// magnitude too would just say the same thing twice, and a sequential ramp is
+// for when colour IS the magnitude channel (heatmaps, choropleths).
+// ---------------------------------------------------------------------------
+function renderToday(latest) {
+  const host = document.getElementById("today-body");
+  const section = document.getElementById("today-section");
+  if (!host || !section) return;
+
+  // Sum across whichever sectors reported. Usually that is H-8 alone.
+  const totals = new Map();
+  for (const r of latest.readings || []) {
+    if (r.value == null) continue;
+    totals.set(r.pollen_type, (totals.get(r.pollen_type) ?? 0) + r.value);
+  }
+  if (!totals.size) return;
+
+  const rows = [...totals].sort((a, b) => b[1] - a[1]);
+  const max = rows[0][1];
+  if (max <= 0) {
+    host.replaceChildren(
+      node("div", "note", "Every pollen type read zero in the reporting sector today."),
+    );
+    section.hidden = false;
+    return;
+  }
+
+  const rowH = 30;
+  const barH = 16; // under the 24px cap; the leftover is air, not padding
+  const W = 800;
+  const M = { t: 6, r: 78, b: 6, l: 132 };
+  const H = M.t + M.b + rows.length * rowH;
+  const iw = W - M.l - M.r;
+
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("class", "chart");
+  svg.setAttribute("role", "img");
+  svg.setAttribute(
+    "aria-label",
+    `Pollen count by type for ${latest.observed_date}, highest ${rows[0][0]} at ${rows[0][1]}`,
+  );
+
+  const add = (tag, attrs, cls) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k of Object.keys(attrs)) n.setAttribute(k, attrs[k]);
+    if (cls) n.setAttribute("class", cls);
+    svg.append(n);
+    return n;
+  };
+
+  const hue = seriesColor(0);
+
+  rows.forEach(([type, value], i) => {
+    const cy = M.t + i * rowH + rowH / 2;
+
+    add("text", { x: M.l - 10, y: cy + 4, "text-anchor": "end" }, "bar-label").textContent = type;
+
+    if (value <= 0) {
+      // A real measured zero. Say so in words rather than drawing a bar of
+      // nothing, which would be indistinguishable from a rendering failure.
+      add("text", { x: M.l, y: cy + 4 }, "bar-zero").textContent = "none detected";
+      return;
+    }
+
+    const w = Math.max(2, (value / max) * iw);
+    add("rect", {
+      x: M.l,
+      y: cy - barH / 2,
+      width: w,
+      height: barH,
+      // Rounded data-end, square at the baseline where it grows from.
+      rx: 4,
+      fill: hue,
+    });
+    add("rect", { x: M.l, y: cy - barH / 2, width: Math.min(4, w), height: barH, fill: hue });
+
+    add("text", { x: M.l + w + 8, y: cy + 4 }, "bar-value").textContent = numFmt.format(value);
+  });
+
+  host.replaceChildren(svg);
+  const unit = node("p", "meta");
+  unit.textContent =
+    `Grains per cubic metre over 24 hours, ${latest.observed_date}, summed across ` +
+    "every sector that reported.";
+  host.append(unit);
+  section.hidden = false;
+}
+
+fetch("data/latest.json", { cache: "no-cache" })
+  .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no latest"))))
+  .then(renderToday)
+  .catch(() => {});
