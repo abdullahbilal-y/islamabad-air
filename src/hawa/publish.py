@@ -38,7 +38,7 @@ from pathlib import Path
 
 from sqlmodel import Session, col, select
 
-from hawa import __version__
+from hawa import __version__, settings_store
 from hawa.alerts.engine import band_for
 from hawa.models import PollenReading, utcnow
 
@@ -161,16 +161,34 @@ def publish_all(session: Session, out_dir: Path) -> PublishReport:
 
     # --- latest.json: the one endpoint most consumers need -----------------
     latest_rows = by_day[days[-1]]
+    summaries = _summarise(latest_rows)
+
+    # Sectors PMD monitors but that reported nothing today. Publishing this
+    # explicitly matters: a sector simply missing from the output is
+    # indistinguishable from a scraper bug, and readers reasonably assume the
+    # worst. Naming the silent traps turns "is this broken?" into a fact.
+    monitored = list(settings_store.get("sectors") or [])
+    reporting = {row["sector"] for row in latest_rows}
+    not_reporting = [sector for sector in monitored if sector not in reporting]
+
     written.append(
         _write_json(
             data_dir / "latest.json",
             {
                 "observed_date": days[-1],
                 "generated_at": utcnow().isoformat(),
-                "sectors": _summarise(latest_rows),
+                "sectors": summaries,
+                "sectors_monitored": monitored,
+                "sectors_not_reporting": not_reporting,
                 "readings": latest_rows,
                 "attribution": ATTRIBUTION,
                 "source_url": SOURCE_URL,
+                "note": (
+                    "A sector listed in sectors_not_reporting sent no data for this "
+                    "day -- PMD published null for it, which is not the same as a "
+                    "count of zero. Only sectors with an actual reading appear in "
+                    "'sectors' and 'readings'."
+                ),
             },
         )
     )

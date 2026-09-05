@@ -142,3 +142,28 @@ def test_subscriptions_are_never_published(db, tmp_path):
     for path in published:
         content = path.read_text(encoding="utf-8", errors="replace")
         assert "123456789" not in content, f"leaked a subscriber target into {path.name}"
+
+
+def test_silent_sectors_are_named_not_omitted(db, tmp_path):
+    """A sector that reported nothing must be visible as such.
+
+    PMD publishes `null` for an idle trap, and outside peak season only H-8 is
+    active. If those sectors simply vanished from the output, a reader could not
+    tell "the trap sent nothing" from "the scraper is broken" -- and would
+    reasonably assume the latter.
+    """
+    from hawa import settings_store
+
+    settings_store.set_value("sectors", ["H-8", "E-8", "G-6", "F-10"])
+    with Session(get_engine()) as session:
+        _seed(session)
+        publish_all(session, tmp_path)
+
+    latest = json.loads((tmp_path / "data" / "latest.json").read_text(encoding="utf-8"))
+
+    assert [s["sector"] for s in latest["sectors"]] == ["H-8"]
+    assert latest["sectors_monitored"] == ["H-8", "E-8", "G-6", "F-10"]
+    assert latest["sectors_not_reporting"] == ["E-8", "G-6", "F-10"]
+    # And no silent sector is fabricated as a zero reading.
+    assert {r["sector"] for r in latest["readings"]} == {"H-8"}
+    assert "not the same as a count of zero" in latest["note"]

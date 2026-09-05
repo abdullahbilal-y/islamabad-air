@@ -56,6 +56,10 @@
   .warn { color:var(--high); font-size:12px; }
   .stale { background:#d9713c; color:#fff; padding:2px 8px; border-radius:999px;
            font-size:12px; font-weight:600; }
+  /* A sector whose trap sent nothing. Visibly present but visibly empty --
+     omitting it entirely reads as a bug in this site. */
+  .card.silent { border-style:dashed; opacity:.72; }
+  .card.silent .total { font-size:20px; font-weight:500; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -117,6 +121,13 @@ function el(tag, cls, text) {
 function renderCards(day) {
   const host = document.getElementById("cards");
   host.replaceChildren();
+
+  // Render the silent traps too. PMD publishes null for a sector that did not
+  // report, which is NOT a count of zero -- so we show the sector as present
+  // and explicitly not reporting, rather than dropping it and letting the page
+  // look broken.
+  const silent = day.sectors_not_reporting ?? [];
+
   for (const s of day.sectors) {
     const card = el("div","card");
     card.append(el("h2", null, s.sector));
@@ -130,6 +141,22 @@ function renderCards(day) {
     }
     card.append(el("div","peak", `${s.types_reported} type(s) reported`));
     host.append(card);
+  }
+
+  for (const sector of silent) {
+    const card = el("div","card silent");
+    card.append(el("h2", null, sector));
+    card.append(el("div","total","Not reporting"));
+    card.append(el("div","peak","PMD published no data for this sector today."));
+    card.title = "Not a zero — this sector's trap sent nothing.";
+    host.append(card);
+  }
+
+  if (silent.length && day.sectors.length) {
+    const note = el("p","meta",
+      `${silent.length} of ${silent.length + day.sectors.length} monitored sectors ` +
+      "reported nothing today. Outside peak season only H-8 is typically active.");
+    host.after(note);
   }
 }
 
