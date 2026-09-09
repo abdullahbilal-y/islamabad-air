@@ -1,6 +1,6 @@
 {
   "attribution": "Pollen counts measured and published by the Pakistan Meteorological Department (weather.gov.pk). Digitised by Hawa, an independent open-source project - not an official PMD service, and not medical advice.",
-  "generated_at": "2026-09-08T19:28:40.038321+00:00",
+  "generated_at": "2026-09-09T09:03:41.088504+00:00",
   "note": "A sector listed in sectors_not_reporting sent no data for this day -- PMD published null for it, which is not the same as a count of zero. Only sectors with an actual reading appear in 'sectors' and 'readings'.",
   "observed_date": "2026-09-04",
   "readings": [
