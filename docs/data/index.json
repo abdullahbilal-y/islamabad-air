@@ -8,7 +8,7 @@
     "month": "data/months/{YYYY-MM}.json"
   },
   "first_date": "2026-09-04",
-  "generated_at": "2026-09-15T09:31:12.409597+00:00",
+  "generated_at": "2026-09-15T15:10:13.321302+00:00",
   "generator": "hawa 0.1.0",
   "last_date": "2026-09-04",
   "months": [
